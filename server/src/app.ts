@@ -6,6 +6,7 @@ import usersRoutes from "./modules/users/users.routes";
 import companiesRoutes from "./modules/companies/companies.routes";
 import companyEmailsRoutes from "./modules/companyEmails/companyEmails.routes";
 import draftsRoutes from "./modules/drafts/draft.routes";
+import attachmentsRoutes from "./modules/attachments/attachments.routes";
 
 dotenv.config();
 
@@ -24,6 +25,7 @@ app.use("/api/users", usersRoutes);
 app.use("/api/companies", companiesRoutes);
 app.use("/api/company-emails", companyEmailsRoutes);
 app.use("/api/drafts", draftsRoutes);
+app.use("/api/attachments", attachmentsRoutes);
 
 
 export default app;
