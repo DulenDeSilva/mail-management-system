@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import authRoutes from "./modules/auth/auth.routes";
 import usersRoutes from "./modules/users/users.routes";
 import companiesRoutes from "./modules/companies/companies.routes";
+import companyEmailsRoutes from "./modules/companyEmails/companyEmails.routes";
 
 dotenv.config();
 
@@ -20,5 +21,6 @@ app.get("/api/health", (_req: Request, res: Response) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/users", usersRoutes);
 app.use("/api/companies", companiesRoutes);
+app.use("/api/company-emails", companyEmailsRoutes);
 
 export default app;
