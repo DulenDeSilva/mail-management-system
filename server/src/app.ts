@@ -5,6 +5,7 @@ import authRoutes from "./modules/auth/auth.routes";
 import usersRoutes from "./modules/users/users.routes";
 import companiesRoutes from "./modules/companies/companies.routes";
 import companyEmailsRoutes from "./modules/companyEmails/companyEmails.routes";
+import draftsRoutes from "./modules/drafts/draft.routes";
 
 dotenv.config();
 
@@ -22,5 +23,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", usersRoutes);
 app.use("/api/companies", companiesRoutes);
 app.use("/api/company-emails", companyEmailsRoutes);
+app.use("/api/drafts", draftsRoutes);
+
 
 export default app;
