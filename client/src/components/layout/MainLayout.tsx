@@ -9,6 +9,7 @@ const MainLayout = () => {
         { label: "Dashboard", path: "/" },
         { label: "Users", path: "/users" },
         { label: "Companies", path: "/companies" },
+        { label: "Company Emails", path: "/company-emails" },
         { label: "Drafts", path: "/drafts" },
         { label: "Outlook", path: "/outlook" },
         { label: "Send Mail", path: "/send-mail" },
