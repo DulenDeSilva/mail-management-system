@@ -13,7 +13,6 @@ const MainLayout = () => {
         { label: "Outlook", path: "/outlook" },
         { label: "Send Mail", path: "/send-mail" },
     ];
-
     return (
         <div style={{ display: "flex", minHeight: "100vh" }}>
             <aside

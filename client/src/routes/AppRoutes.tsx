@@ -1,9 +1,10 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import LoginPage from "../pages/LoginPage";
 import DashboardPage from "../pages/DashboardPage";
+import UsersPage from "../pages/UsersPage";
+import CompaniesPage from "../pages/CompaniesPage";
 import ProtectedRoute from "./ProtectedRoute";
 import MainLayout from "../components/layout/MainLayout";
-import UsersPage from "../pages/UsersPage";
 
 const AppRoutes = () => {
     return (
@@ -15,6 +16,7 @@ const AppRoutes = () => {
                     <Route path="/" element={<MainLayout />}>
                         <Route index element={<DashboardPage />} />
                         <Route path="users" element={<UsersPage />} />
+                        <Route path="companies" element={<CompaniesPage />} />
                     </Route>
                 </Route>
 
