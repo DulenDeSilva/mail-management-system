@@ -40,11 +40,15 @@ const SendMailPage = () => {
             );
 
             const emailMap: CompanyEmailMap = {};
+            const expandedMap: Record<number, boolean> = {};
+
             emailResults.forEach(({ companyId, emails }) => {
                 emailMap[companyId] = emails;
+                expandedMap[companyId] = emails.length > 0;
             });
 
             setCompanyEmailsMap(emailMap);
+            setExpandedCompanies(expandedMap);
         } catch (err: any) {
             setError(err?.response?.data?.message || "Failed to load send mail data");
         } finally {
@@ -80,7 +84,6 @@ const SendMailPage = () => {
     }, [companyEmailsMap]);
 
     const totalSelected = selectedRecipientList.length;
-
     const isAllSelected = totalEmails > 0 && totalSelected === totalEmails;
 
     const toggleExpandCompany = (companyId: number) => {
@@ -157,198 +160,286 @@ const SendMailPage = () => {
     };
 
     return (
-        <div>
-            <h1>Send Mail</h1>
+        <div className="page-shell">
+            <div className="page-header">
+                <div className="page-header__copy">
+                    <span className="eyebrow">Delivery Planner</span>
+                    <h1 className="page-title">Send Mail</h1>
+                    <p className="page-subtitle">
+                        Select the draft, choose company recipients, add any manual CC list,
+                        and review the delivery summary before the live send integration is
+                        switched on.
+                    </p>
+                </div>
 
-            {error && <p style={{ color: "#f87171" }}>{error}</p>}
+                <div className="page-actions">
+                    <span className="badge">{drafts.length} drafts</span>
+                    <span className="badge badge--warm">{companies.length} companies</span>
+                </div>
+            </div>
+
+            {error && <div className="message message--error">{error}</div>}
 
             {loading ? (
-                <p>Loading send-mail data...</p>
+                <div className="panel">
+                    <div className="empty-state">Loading send-mail data...</div>
+                </div>
             ) : (
-                <div
-                    style={{
-                        display: "grid",
-                        gridTemplateColumns: "1.2fr 1fr",
-                        gap: 24,
-                        alignItems: "start",
-                    }}
-                >
-                    <div style={{ display: "grid", gap: 24 }}>
-                        <div style={{ border: "1px solid #334155", borderRadius: 8, padding: 16 }}>
-                            <h2>Select Draft</h2>
-                            <select
-                                style={{ width: "100%", padding: 8 }}
-                                value={selectedDraftId}
-                                onChange={(e) =>
-                                    setSelectedDraftId(e.target.value ? Number(e.target.value) : "")
-                                }
-                            >
-                                <option value="">-- Select Draft --</option>
-                                {drafts.map((draft) => (
-                                    <option key={draft.id} value={draft.id}>
-                                        {draft.title} ({draft.visibility})
-                                    </option>
-                                ))}
-                            </select>
+                <div className="send-mail-grid">
+                    <div className="panel-stack">
+                        <section className="panel">
+                            <div className="panel__header">
+                                <div>
+                                    <span className="eyebrow">Step 1</span>
+                                    <h2>Select a draft</h2>
+                                </div>
+                                <span className="badge badge--warm">
+                                    {selectedDraft ? selectedDraft.visibility : "Not selected"}
+                                </span>
+                            </div>
 
-                            {selectedDraft && (
-                                <div style={{ marginTop: 16 }}>
-                                    <p>
-                                        <strong>Subject:</strong> {selectedDraft.subject}
-                                    </p>
+                            <div className="field">
+                                <label htmlFor="sendmail-draft">Choose draft</label>
+                                <select
+                                    id="sendmail-draft"
+                                    className="select"
+                                    value={selectedDraftId}
+                                    onChange={(e) =>
+                                        setSelectedDraftId(
+                                            e.target.value ? Number(e.target.value) : ""
+                                        )
+                                    }
+                                >
+                                    <option value="">-- Select Draft --</option>
+                                    {drafts.map((draft) => (
+                                        <option key={draft.id} value={draft.id}>
+                                            {draft.title} ({draft.visibility})
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {selectedDraft ? (
+                                <article className="item-card">
+                                    <div className="summary-row">
+                                        <span>Subject</span>
+                                        <strong>{selectedDraft.subject}</strong>
+                                    </div>
+
                                     <div
-                                        style={{
-                                            marginTop: 12,
-                                            padding: 12,
-                                            borderRadius: 6,
-                                            background: "#0f172a",
+                                        className="rich-preview"
+                                        dangerouslySetInnerHTML={{
+                                            __html: selectedDraft.bodyHtml,
                                         }}
-                                        dangerouslySetInnerHTML={{ __html: selectedDraft.bodyHtml }}
                                     />
+                                </article>
+                            ) : (
+                                <div className="empty-state">
+                                    Pick a draft to preview its subject and email body.
                                 </div>
                             )}
-                        </div>
+                        </section>
 
-                        <div style={{ border: "1px solid #334155", borderRadius: 8, padding: 16 }}>
-                            <h2>Select Recipients</h2>
+                        <section className="panel">
+                            <div className="panel__header">
+                                <div>
+                                    <span className="eyebrow">Step 2</span>
+                                    <h2>Select recipients</h2>
+                                </div>
+                                <span className="badge">
+                                    {totalSelected}/{totalEmails || 0} selected
+                                </span>
+                            </div>
 
-                            <label style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+                            <label className="check-row">
                                 <input
                                     type="checkbox"
                                     checked={isAllSelected}
                                     onChange={handleToggleSelectAll}
                                 />
-                                Select All
+                                <span className="check-row__text">
+                                    <strong>Select all recipients</strong>
+                                    <span className="muted">
+                                        Apply selection across every company contact.
+                                    </span>
+                                </span>
                             </label>
 
-                            <div style={{ display: "grid", gap: 12 }}>
+                            <div className="selection-cluster">
                                 {companies.map((company) => {
                                     const emails = companyEmailsMap[company.id] || [];
                                     const expanded = expandedCompanies[company.id];
 
                                     return (
-                                        <div
-                                            key={company.id}
-                                            style={{
-                                                border: "1px solid #334155",
-                                                borderRadius: 8,
-                                                padding: 12,
-                                            }}
-                                        >
-                                            <div
-                                                style={{
-                                                    display: "flex",
-                                                    justifyContent: "space-between",
-                                                    alignItems: "center",
-                                                    marginBottom: expanded ? 12 : 0,
-                                                }}
-                                            >
-                                                <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                        <article key={company.id} className="company-card">
+                                            <div className="company-card__header">
+                                                <label className="check-row">
                                                     <input
                                                         type="checkbox"
                                                         checked={isCompanySelected(company.id)}
-                                                        onChange={() => handleToggleCompany(company.id)}
+                                                        onChange={() =>
+                                                            handleToggleCompany(company.id)
+                                                        }
                                                     />
-                                                    <span>
-                                                        {company.name}
-                                                        {isCompanyPartiallySelected(company.id) ? " (partial)" : ""}
+                                                    <span className="check-row__text">
+                                                        <strong>{company.name}</strong>
+                                                        <span className="muted">
+                                                            {emails.length} contacts
+                                                            {isCompanyPartiallySelected(company.id)
+                                                                ? " selected partially"
+                                                                : ""}
+                                                        </span>
                                                     </span>
                                                 </label>
 
-                                                <button onClick={() => toggleExpandCompany(company.id)}>
-                                                    {expanded ? "Hide" : "Show"}
-                                                </button>
+                                                <div className="button-group">
+                                                    <button
+                                                        type="button"
+                                                        className="button button--ghost button--small"
+                                                        onClick={() =>
+                                                            toggleExpandCompany(company.id)
+                                                        }
+                                                    >
+                                                        {expanded ? "Hide" : "Show"}
+                                                    </button>
+                                                </div>
                                             </div>
 
                                             {expanded && (
-                                                <div style={{ display: "grid", gap: 8 }}>
+                                                <div className="company-card__emails">
                                                     {emails.length === 0 ? (
-                                                        <p>No emails under this company.</p>
+                                                        <div className="empty-state">
+                                                            No emails under this company.
+                                                        </div>
                                                     ) : (
                                                         emails.map((email) => (
                                                             <label
                                                                 key={email.id}
-                                                                style={{ display: "flex", alignItems: "center", gap: 8 }}
+                                                                className="check-row"
                                                             >
                                                                 <input
                                                                     type="checkbox"
-                                                                    checked={!!selectedEmails[email.id]}
-                                                                    onChange={() => handleToggleEmail(email.id)}
+                                                                    checked={
+                                                                        !!selectedEmails[email.id]
+                                                                    }
+                                                                    onChange={() =>
+                                                                        handleToggleEmail(email.id)
+                                                                    }
                                                                 />
-                                                                <span>
-                                                                    {email.contactName || "No Name"} - {email.email}
+                                                                <span className="check-row__text">
+                                                                    <strong>
+                                                                        {email.contactName ||
+                                                                            "No Name"}
+                                                                    </strong>
+                                                                    <span className="muted">
+                                                                        {email.email}
+                                                                    </span>
                                                                 </span>
                                                             </label>
                                                         ))
                                                     )}
                                                 </div>
                                             )}
-                                        </div>
+                                        </article>
                                     );
                                 })}
                             </div>
-                        </div>
+                        </section>
 
-                        <div style={{ border: "1px solid #334155", borderRadius: 8, padding: 16 }}>
-                            <h2>Manual CC</h2>
-                            <p>Enter comma-separated email addresses.</p>
-                            <textarea
-                                style={{ width: "100%", minHeight: 100, padding: 8 }}
-                                value={manualCc}
-                                onChange={(e) => setManualCc(e.target.value)}
-                                placeholder="cc1@example.com, cc2@example.com"
-                            />
-                        </div>
+                        <section className="panel">
+                            <div className="panel__header">
+                                <div>
+                                    <span className="eyebrow">Step 3</span>
+                                    <h2>Manual CC</h2>
+                                </div>
+                                <span className="badge badge--warm">
+                                    {manualCcList.length} addresses
+                                </span>
+                            </div>
+
+                            <div className="field">
+                                <label htmlFor="sendmail-cc">Comma-separated CC addresses</label>
+                                <textarea
+                                    id="sendmail-cc"
+                                    className="textarea"
+                                    value={manualCc}
+                                    onChange={(e) => setManualCc(e.target.value)}
+                                    placeholder="cc1@example.com, cc2@example.com"
+                                />
+                            </div>
+                        </section>
                     </div>
 
-                    <div style={{ border: "1px solid #334155", borderRadius: 8, padding: 16 }}>
-                        <h2>Preview Summary</h2>
-
-                        <p>
-                            <strong>Selected Draft:</strong>{" "}
-                            {selectedDraft ? selectedDraft.title : "None"}
-                        </p>
-
-                        <p>
-                            <strong>Total Selected Recipients:</strong> {totalSelected}
-                        </p>
-
-                        <div style={{ marginTop: 16 }}>
-                            <h3>To Recipients</h3>
-                            {selectedRecipientList.length === 0 ? (
-                                <p>No recipients selected.</p>
-                            ) : (
-                                <ul>
-                                    {selectedRecipientList.map((recipient) => (
-                                        <li key={recipient.id}>
-                                            {recipient.contactName || "No Name"} - {recipient.email}
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
+                    <aside className="panel preview-summary">
+                        <div className="panel__header">
+                            <div>
+                                <span className="eyebrow">Preview Summary</span>
+                                <h2>Ready to review</h2>
+                            </div>
+                            <span className="badge badge--success">{totalSelected} to send</span>
                         </div>
 
-                        <div style={{ marginTop: 16 }}>
-                            <h3>CC Recipients</h3>
-                            {manualCcList.length === 0 ? (
-                                <p>No CC recipients.</p>
-                            ) : (
-                                <ul>
-                                    {manualCcList.map((item, index) => (
-                                        <li key={`${item}-${index}`}>{item}</li>
-                                    ))}
-                                </ul>
-                            )}
+                        <div className="summary-stack">
+                            <div className="summary-row">
+                                <span>Selected Draft</span>
+                                <strong>{selectedDraft ? selectedDraft.title : "None"}</strong>
+                            </div>
+                            <div className="summary-row">
+                                <span>Total Recipients</span>
+                                <strong>{totalSelected}</strong>
+                            </div>
+                            <div className="summary-row">
+                                <span>Manual CC</span>
+                                <strong>{manualCcList.length}</strong>
+                            </div>
                         </div>
 
-                        <button onClick={handleMockSend} style={{ marginTop: 20 }}>
-                            Send Mail
-                        </button>
+                        <div className="panel__header section-heading">
+                            <div>
+                                <h3>To Recipients</h3>
+                            </div>
+                        </div>
 
-                        <p style={{ marginTop: 12, color: "#94a3b8" }}>
-                            Real email sending will be connected once Outlook permission/testing is ready.
-                        </p>
-                    </div>
+                        {selectedRecipientList.length === 0 ? (
+                            <div className="empty-state">No recipients selected.</div>
+                        ) : (
+                            <ul className="clean-list">
+                                {selectedRecipientList.map((recipient) => (
+                                    <li key={recipient.id}>
+                                        <strong>{recipient.contactName || "No Name"}</strong>
+                                        <div className="muted">{recipient.email}</div>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+
+                        <div className="panel__header section-heading">
+                            <div>
+                                <h3>CC Recipients</h3>
+                            </div>
+                        </div>
+
+                        {manualCcList.length === 0 ? (
+                            <div className="empty-state">No CC recipients.</div>
+                        ) : (
+                            <ul className="clean-list">
+                                {manualCcList.map((item, index) => (
+                                    <li key={`${item}-${index}`}>{item}</li>
+                                ))}
+                            </ul>
+                        )}
+
+                        <div className="form-grid form-grid--spaced">
+                            <button type="button" className="button" onClick={handleMockSend}>
+                                Send Mail
+                            </button>
+
+                            <div className="message message--info">
+                                Real email sending will be connected once Outlook
+                                permission/testing is ready.
+                            </div>
+                        </div>
+                    </aside>
                 </div>
             )}
         </div>

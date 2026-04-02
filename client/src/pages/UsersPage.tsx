@@ -1,4 +1,5 @@
-import { FormEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import type { FormEvent } from "react";
 import { createUserRequest, deactivateUserRequest, getUsersRequest } from "../api/usersApi";
 import { useAuth } from "../context/AuthContext";
 import type { AppUser } from "../types/user";
@@ -68,64 +69,84 @@ const UsersPage = () => {
     };
 
     if (user?.role !== "ADMIN") {
-        return <p>You do not have permission to view this page.</p>;
+        return (
+            <div className="page-shell">
+                <div className="message message--info">
+                    You do not have permission to view this page.
+                </div>
+            </div>
+        );
     }
 
+    const activeUsers = users.filter((item) => item.isActive).length;
+
     return (
-        <div>
-            <h1>Users</h1>
+        <div className="page-shell">
+            <div className="page-header">
+                <div className="page-header__copy">
+                    <span className="eyebrow">Administration</span>
+                    <h1 className="page-title">Users</h1>
+                    <p className="page-subtitle">
+                        Add team members, assign roles, and keep access to the mail workflow
+                        controlled.
+                    </p>
+                </div>
 
-            <div
-                style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 2fr",
-                    gap: 24,
-                    alignItems: "start",
-                }}
-            >
-                <div
-                    style={{
-                        border: "1px solid #334155",
-                        padding: 16,
-                        borderRadius: 8,
-                    }}
-                >
-                    <h2>Create User</h2>
+                <div className="page-actions">
+                    <span className="badge">{users.length} total users</span>
+                    <span className="badge badge--success">{activeUsers} active</span>
+                </div>
+            </div>
 
-                    <form onSubmit={handleCreateUser}>
-                        <div style={{ marginBottom: 12 }}>
-                            <label>Name</label>
+            {error && <div className="message message--error">{error}</div>}
+
+            <div className="split-layout">
+                <section className="panel">
+                    <div className="panel__header">
+                        <div>
+                            <span className="eyebrow">Create Account</span>
+                            <h2>Add a new user</h2>
+                        </div>
+                    </div>
+
+                    <form className="form-grid" onSubmit={handleCreateUser}>
+                        <div className="field">
+                            <label htmlFor="user-name">Name</label>
                             <input
-                                style={{ width: "100%", padding: 8 }}
+                                id="user-name"
+                                className="input"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
                             />
                         </div>
 
-                        <div style={{ marginBottom: 12 }}>
-                            <label>Email</label>
+                        <div className="field">
+                            <label htmlFor="user-email">Email</label>
                             <input
+                                id="user-email"
                                 type="email"
-                                style={{ width: "100%", padding: 8 }}
+                                className="input"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                             />
                         </div>
 
-                        <div style={{ marginBottom: 12 }}>
-                            <label>Password</label>
+                        <div className="field">
+                            <label htmlFor="user-password">Password</label>
                             <input
+                                id="user-password"
                                 type="password"
-                                style={{ width: "100%", padding: 8 }}
+                                className="input"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                             />
                         </div>
 
-                        <div style={{ marginBottom: 12 }}>
-                            <label>Role</label>
+                        <div className="field">
+                            <label htmlFor="user-role">Role</label>
                             <select
-                                style={{ width: "100%", padding: 8 }}
+                                id="user-role"
+                                className="select"
                                 value={role}
                                 onChange={(e) => setRole(e.target.value as "ADMIN" | "WORKER")}
                             >
@@ -134,62 +155,76 @@ const UsersPage = () => {
                             </select>
                         </div>
 
-                        <button type="submit" disabled={submitting}>
+                        <button type="submit" className="button" disabled={submitting}>
                             {submitting ? "Creating..." : "Create User"}
                         </button>
                     </form>
-                </div>
+                </section>
 
-                <div
-                    style={{
-                        border: "1px solid #334155",
-                        padding: 16,
-                        borderRadius: 8,
-                    }}
-                >
-                    <h2>User List</h2>
-
-                    {error && <p style={{ color: "#f87171" }}>{error}</p>}
+                <section className="panel">
+                    <div className="panel__header">
+                        <div>
+                            <span className="eyebrow">Directory</span>
+                            <h2>Team members</h2>
+                        </div>
+                        <span className="badge badge--warm">Role-based access</span>
+                    </div>
 
                     {loading ? (
-                        <p>Loading users...</p>
+                        <div className="empty-state">Loading users...</div>
                     ) : users.length === 0 ? (
-                        <p>No users found.</p>
+                        <div className="empty-state">No users found.</div>
                     ) : (
-                        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                            <thead>
-                                <tr>
-                                    <th style={{ textAlign: "left", padding: 8 }}>Name</th>
-                                    <th style={{ textAlign: "left", padding: 8 }}>Email</th>
-                                    <th style={{ textAlign: "left", padding: 8 }}>Role</th>
-                                    <th style={{ textAlign: "left", padding: 8 }}>Status</th>
-                                    <th style={{ textAlign: "left", padding: 8 }}>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {users.map((item) => (
-                                    <tr key={item.id}>
-                                        <td style={{ padding: 8 }}>{item.name}</td>
-                                        <td style={{ padding: 8 }}>{item.email}</td>
-                                        <td style={{ padding: 8 }}>{item.role}</td>
-                                        <td style={{ padding: 8 }}>
-                                            {item.isActive ? "Active" : "Inactive"}
-                                        </td>
-                                        <td style={{ padding: 8 }}>
-                                            {item.isActive ? (
-                                                <button onClick={() => handleDeactivate(item.id)}>
-                                                    Deactivate
-                                                </button>
-                                            ) : (
-                                                <span>—</span>
-                                            )}
-                                        </td>
+                        <div className="table-wrap">
+                            <table className="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Role</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {users.map((item) => (
+                                        <tr key={item.id}>
+                                            <td>{item.name}</td>
+                                            <td>{item.email}</td>
+                                            <td>
+                                                <span className="badge">{item.role}</span>
+                                            </td>
+                                            <td>
+                                                <span
+                                                    className={`badge ${
+                                                        item.isActive
+                                                            ? "badge--success"
+                                                            : "badge--danger"
+                                                    }`}
+                                                >
+                                                    {item.isActive ? "Active" : "Inactive"}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                {item.isActive ? (
+                                                    <button
+                                                        type="button"
+                                                        className="button button--danger button--small"
+                                                        onClick={() => handleDeactivate(item.id)}
+                                                    >
+                                                        Deactivate
+                                                    </button>
+                                                ) : (
+                                                    <span className="muted">Already inactive</span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     )}
-                </div>
+                </section>
             </div>
         </div>
     );

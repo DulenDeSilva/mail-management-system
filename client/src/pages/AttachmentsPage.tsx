@@ -6,17 +6,15 @@ import {
     getDraftAttachmentsRequest,
     uploadDraftAttachmentsRequest,
 } from "../api/attachmentsApi";
-import { useAuth } from "../context/AuthContext";
 import type { Draft } from "../types/draft";
 import type { DraftAttachment } from "../types/attachment";
 
 const AttachmentsPage = () => {
-    useAuth();
-
     const [drafts, setDrafts] = useState<Draft[]>([]);
     const [selectedDraftId, setSelectedDraftId] = useState<number | "">("");
     const [attachments, setAttachments] = useState<DraftAttachment[]>([]);
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+    const [fileInputKey, setFileInputKey] = useState(0);
 
     const [loadingDrafts, setLoadingDrafts] = useState(true);
     const [loadingAttachments, setLoadingAttachments] = useState(false);
@@ -81,6 +79,7 @@ const AttachmentsPage = () => {
             setUploading(true);
             await uploadDraftAttachmentsRequest(Number(selectedDraftId), selectedFiles);
             setSelectedFiles([]);
+            setFileInputKey((prev) => prev + 1);
             await loadAttachments(Number(selectedDraftId));
         } catch (err: any) {
             setError(err?.response?.data?.message || "Failed to upload attachments");
@@ -102,109 +101,140 @@ const AttachmentsPage = () => {
     };
 
     return (
-        <div>
-            <h1>Draft Attachments</h1>
+        <div className="page-shell">
+            <div className="page-header">
+                <div className="page-header__copy">
+                    <span className="eyebrow">Asset Library</span>
+                    <h1 className="page-title">Draft Attachments</h1>
+                    <p className="page-subtitle">
+                        Choose a draft, attach the supporting files, and keep each message
+                        package ready for delivery.
+                    </p>
+                </div>
 
-            {error && <p style={{ color: "#f87171" }}>{error}</p>}
-
-            <div style={{ marginBottom: 20 }}>
-                <label>Select Draft</label>
-                <select
-                    style={{ display: "block", marginTop: 8, padding: 8, minWidth: 320 }}
-                    value={selectedDraftId}
-                    onChange={(e) =>
-                        setSelectedDraftId(e.target.value ? Number(e.target.value) : "")
-                    }
-                >
-                    <option value="">-- Select Draft --</option>
-                    {drafts.map((draft) => (
-                        <option key={draft.id} value={draft.id}>
-                            {draft.title} ({draft.visibility})
-                        </option>
-                    ))}
-                </select>
+                <div className="page-actions">
+                    <span className="badge">{attachments.length} files shown</span>
+                </div>
             </div>
 
-            <div
-                style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 2fr",
-                    gap: 24,
-                    alignItems: "start",
-                }}
-            >
-                <div
-                    style={{
-                        border: "1px solid #334155",
-                        padding: 16,
-                        borderRadius: 8,
-                    }}
-                >
-                    <h2>Upload Attachments</h2>
+            {error && <div className="message message--error">{error}</div>}
 
-                    <input type="file" multiple onChange={handleFileChange} />
-
-                    {selectedFiles.length > 0 && (
-                        <ul style={{ marginTop: 12 }}>
-                            {selectedFiles.map((file, index) => (
-                                <li key={`${file.name}-${index}`}>{file.name}</li>
-                            ))}
-                        </ul>
-                    )}
-
-                    <button
-                        onClick={handleUpload}
-                        disabled={uploading || selectedDraftId === ""}
-                        style={{ marginTop: 12 }}
-                    >
-                        {uploading ? "Uploading..." : "Upload"}
-                    </button>
+            <section className="panel">
+                <div className="panel__header">
+                    <div>
+                        <span className="eyebrow">Step 1</span>
+                        <h2>Select a draft</h2>
+                    </div>
+                    <span className="badge badge--warm">{drafts.length} drafts</span>
                 </div>
 
-                <div
-                    style={{
-                        border: "1px solid #334155",
-                        padding: 16,
-                        borderRadius: 8,
-                    }}
-                >
-                    <h2>Attachment List</h2>
+                <div className="field">
+                    <label htmlFor="attachment-draft">Draft</label>
+                    <select
+                        id="attachment-draft"
+                        className="select"
+                        value={selectedDraftId}
+                        onChange={(e) =>
+                            setSelectedDraftId(e.target.value ? Number(e.target.value) : "")
+                        }
+                    >
+                        <option value="">-- Select Draft --</option>
+                        {drafts.map((draft) => (
+                            <option key={draft.id} value={draft.id}>
+                                {draft.title} ({draft.visibility})
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            </section>
+
+            <div className="split-layout">
+                <section className="panel">
+                    <div className="panel__header">
+                        <div>
+                            <span className="eyebrow">Step 2</span>
+                            <h2>Upload attachments</h2>
+                        </div>
+                    </div>
+
+                    <div className="form-grid">
+                        <input
+                            key={fileInputKey}
+                            type="file"
+                            multiple
+                            onChange={handleFileChange}
+                        />
+
+                        {selectedFiles.length > 0 && (
+                            <ul className="clean-list">
+                                {selectedFiles.map((file, index) => (
+                                    <li key={`${file.name}-${index}`}>{file.name}</li>
+                                ))}
+                            </ul>
+                        )}
+
+                        <button
+                            type="button"
+                            className="button"
+                            onClick={handleUpload}
+                            disabled={uploading || selectedDraftId === ""}
+                        >
+                            {uploading ? "Uploading..." : "Upload"}
+                        </button>
+                    </div>
+                </section>
+
+                <section className="panel">
+                    <div className="panel__header">
+                        <div>
+                            <span className="eyebrow">Step 3</span>
+                            <h2>Attachment list</h2>
+                        </div>
+                    </div>
 
                     {loadingDrafts ? (
-                        <p>Loading drafts...</p>
+                        <div className="empty-state">Loading drafts...</div>
                     ) : selectedDraftId === "" ? (
-                        <p>Select a draft to view attachments.</p>
+                        <div className="empty-state">Select a draft to view attachments.</div>
                     ) : loadingAttachments ? (
-                        <p>Loading attachments...</p>
+                        <div className="empty-state">Loading attachments...</div>
                     ) : attachments.length === 0 ? (
-                        <p>No attachments found for this draft.</p>
+                        <div className="empty-state">
+                            No attachments found for this draft.
+                        </div>
                     ) : (
-                        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                            <thead>
-                                <tr>
-                                    <th style={{ textAlign: "left", padding: 8 }}>File Name</th>
-                                    <th style={{ textAlign: "left", padding: 8 }}>Type</th>
-                                    <th style={{ textAlign: "left", padding: 8 }}>Size</th>
-                                    <th style={{ textAlign: "left", padding: 8 }}>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {attachments.map((item) => (
-                                    <tr key={item.id}>
-                                        <td style={{ padding: 8 }}>{item.fileName}</td>
-                                        <td style={{ padding: 8 }}>{item.mimeType}</td>
-                                        <td style={{ padding: 8 }}>
-                                            {(item.sizeBytes / 1024).toFixed(2)} KB
-                                        </td>
-                                        <td style={{ padding: 8 }}>
-                                            <button onClick={() => handleDelete(item.id)}>Delete</button>
-                                        </td>
+                        <div className="table-wrap">
+                            <table className="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>File Name</th>
+                                        <th>Type</th>
+                                        <th>Size</th>
+                                        <th>Action</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {attachments.map((item) => (
+                                        <tr key={item.id}>
+                                            <td>{item.fileName}</td>
+                                            <td>{item.mimeType}</td>
+                                            <td>{(item.sizeBytes / 1024).toFixed(2)} KB</td>
+                                            <td>
+                                                <button
+                                                    type="button"
+                                                    className="button button--danger button--small"
+                                                    onClick={() => handleDelete(item.id)}
+                                                >
+                                                    Delete
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     )}
-                </div>
+                </section>
             </div>
         </div>
     );

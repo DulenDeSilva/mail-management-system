@@ -28,36 +28,72 @@ const LoginPage = () => {
     };
 
     return (
-        <div style={{ maxWidth: 400, margin: "80px auto" }}>
-            <h1>Login</h1>
+        <div className="login-shell">
+            <div className="login-card">
+                <section className="login-card__hero">
+                    <span className="eyebrow">Mail Management System</span>
+                    <h1>Keep your email operations tidy and ready to send.</h1>
+                    <p>
+                        The interface is tuned for full desktop use first, while still
+                        adapting cleanly on smaller screens for quick checks and updates.
+                    </p>
 
-            <form onSubmit={handleSubmit}>
-                <div style={{ marginBottom: 12 }}>
-                    <label>Email</label>
-                    <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        style={{ width: "100%", padding: 8 }}
-                    />
-                </div>
+                    <div className="login-card__stats">
+                        <div className="login-stat">
+                            <strong>Unified workflow</strong>
+                            <p>Users, companies, drafts, attachments, and Outlook in one place.</p>
+                        </div>
+                        <div className="login-stat">
+                            <strong>Warm palette</strong>
+                            <p>Off-white surfaces with the `#343148` brand tone.</p>
+                        </div>
+                    </div>
+                </section>
 
-                <div style={{ marginBottom: 12 }}>
-                    <label>Password</label>
-                    <input
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        style={{ width: "100%", padding: 8 }}
-                    />
-                </div>
+                <section className="login-card__panel">
+                    <div className="page-header__copy">
+                        <span className="eyebrow">Secure Access</span>
+                        <h2>Sign in</h2>
+                        <p className="page-subtitle">
+                            Use your existing credentials to continue into the workspace.
+                        </p>
+                    </div>
 
-                {error && <p style={{ color: "red" }}>{error}</p>}
+                    {error && <div className="message message--error">{error}</div>}
 
-                <button type="submit" disabled={submitting}>
-                    {submitting ? "Logging in..." : "Login"}
-                </button>
-            </form>
+                    <form className="form-grid" onSubmit={handleSubmit}>
+                        <div className="field">
+                            <label htmlFor="login-email">Email</label>
+                            <input
+                                id="login-email"
+                                type="email"
+                                className="input"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                            />
+                        </div>
+
+                        <div className="field">
+                            <label htmlFor="login-password">Password</label>
+                            <input
+                                id="login-password"
+                                type="password"
+                                className="input"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                            />
+                        </div>
+
+                        <button type="submit" className="button button--full" disabled={submitting}>
+                            {submitting ? "Logging in..." : "Login"}
+                        </button>
+                    </form>
+
+                    <div className="message message--info">
+                        Demo defaults are prefilled here for faster UI testing.
+                    </div>
+                </section>
+            </div>
         </div>
     );
 };

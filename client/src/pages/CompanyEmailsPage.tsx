@@ -1,4 +1,5 @@
-import { FormEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import type { FormEvent } from "react";
 import { getCompaniesRequest } from "../api/companiesApi";
 import {
     createCompanyEmailRequest,
@@ -134,153 +135,203 @@ const CompanyEmailsPage = () => {
     };
 
     if (user?.role !== "ADMIN") {
-        return <p>You do not have permission to view this page.</p>;
+        return (
+            <div className="page-shell">
+                <div className="message message--info">
+                    You do not have permission to view this page.
+                </div>
+            </div>
+        );
     }
 
     return (
-        <div>
-            <h1>Company Emails</h1>
+        <div className="page-shell">
+            <div className="page-header">
+                <div className="page-header__copy">
+                    <span className="eyebrow">Contacts</span>
+                    <h1 className="page-title">Company Emails</h1>
+                    <p className="page-subtitle">
+                        Choose a company, then maintain the contact emails used when building
+                        recipient lists.
+                    </p>
+                </div>
 
-            {error && <p style={{ color: "#f87171" }}>{error}</p>}
-
-            <div style={{ marginBottom: 20 }}>
-                <label>Select Company</label>
-                <select
-                    style={{ display: "block", marginTop: 8, padding: 8, minWidth: 320 }}
-                    value={selectedCompanyId}
-                    onChange={(e) =>
-                        setSelectedCompanyId(e.target.value ? Number(e.target.value) : "")
-                    }
-                >
-                    <option value="">-- Select Company --</option>
-                    {companies.map((company) => (
-                        <option key={company.id} value={company.id}>
-                            {company.name}
-                        </option>
-                    ))}
-                </select>
+                <div className="page-actions">
+                    <span className="badge">{companyEmails.length} contacts shown</span>
+                </div>
             </div>
 
-            <div
-                style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 2fr",
-                    gap: 24,
-                    alignItems: "start",
-                }}
-            >
-                <div
-                    style={{
-                        border: "1px solid #334155",
-                        padding: 16,
-                        borderRadius: 8,
-                    }}
-                >
-                    <h2>Add Email</h2>
+            {error && <div className="message message--error">{error}</div>}
 
-                    <form onSubmit={handleCreate}>
-                        <div style={{ marginBottom: 12 }}>
-                            <label>Contact Name</label>
+            <section className="panel">
+                <div className="panel__header">
+                    <div>
+                        <span className="eyebrow">Step 1</span>
+                        <h2>Select a company</h2>
+                    </div>
+                    <span className="badge badge--warm">{companies.length} available</span>
+                </div>
+
+                <div className="field">
+                    <label htmlFor="company-email-company">Company</label>
+                    <select
+                        id="company-email-company"
+                        className="select"
+                        value={selectedCompanyId}
+                        onChange={(e) =>
+                            setSelectedCompanyId(e.target.value ? Number(e.target.value) : "")
+                        }
+                    >
+                        <option value="">-- Select Company --</option>
+                        {companies.map((company) => (
+                            <option key={company.id} value={company.id}>
+                                {company.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            </section>
+
+            <div className="split-layout">
+                <section className="panel">
+                    <div className="panel__header">
+                        <div>
+                            <span className="eyebrow">Step 2</span>
+                            <h2>Add email contact</h2>
+                        </div>
+                    </div>
+
+                    <form className="form-grid" onSubmit={handleCreate}>
+                        <div className="field">
+                            <label htmlFor="contact-name">Contact Name</label>
                             <input
-                                style={{ width: "100%", padding: 8 }}
+                                id="contact-name"
+                                className="input"
                                 value={contactName}
                                 onChange={(e) => setContactName(e.target.value)}
                             />
                         </div>
 
-                        <div style={{ marginBottom: 12 }}>
-                            <label>Email</label>
+                        <div className="field">
+                            <label htmlFor="contact-email">Email</label>
                             <input
+                                id="contact-email"
                                 type="email"
-                                style={{ width: "100%", padding: 8 }}
+                                className="input"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                             />
                         </div>
 
-                        <button type="submit" disabled={submitting || selectedCompanyId === ""}>
+                        <button
+                            type="submit"
+                            className="button"
+                            disabled={submitting || selectedCompanyId === ""}
+                        >
                             {submitting ? "Adding..." : "Add Email"}
                         </button>
                     </form>
-                </div>
+                </section>
 
-                <div
-                    style={{
-                        border: "1px solid #334155",
-                        padding: 16,
-                        borderRadius: 8,
-                    }}
-                >
-                    <h2>Email List</h2>
+                <section className="panel">
+                    <div className="panel__header">
+                        <div>
+                            <span className="eyebrow">Step 3</span>
+                            <h2>Email list</h2>
+                        </div>
+                    </div>
 
                     {loadingCompanies ? (
-                        <p>Loading companies...</p>
+                        <div className="empty-state">Loading companies...</div>
                     ) : selectedCompanyId === "" ? (
-                        <p>Select a company to view emails.</p>
+                        <div className="empty-state">Select a company to view emails.</div>
                     ) : loadingEmails ? (
-                        <p>Loading company emails...</p>
+                        <div className="empty-state">Loading company emails...</div>
                     ) : companyEmails.length === 0 ? (
-                        <p>No emails found for this company.</p>
+                        <div className="empty-state">No emails found for this company.</div>
                     ) : (
-                        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                            <thead>
-                                <tr>
-                                    <th style={{ textAlign: "left", padding: 8 }}>Contact Name</th>
-                                    <th style={{ textAlign: "left", padding: 8 }}>Email</th>
-                                    <th style={{ textAlign: "left", padding: 8 }}>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {companyEmails.map((item) => (
-                                    <tr key={item.id}>
-                                        <td style={{ padding: 8 }}>
-                                            {editingId === item.id ? (
-                                                <input
-                                                    style={{ width: "100%", padding: 6 }}
-                                                    value={editingContactName}
-                                                    onChange={(e) => setEditingContactName(e.target.value)}
-                                                />
-                                            ) : (
-                                                item.contactName || "-"
-                                            )}
-                                        </td>
-                                        <td style={{ padding: 8 }}>
-                                            {editingId === item.id ? (
-                                                <input
-                                                    style={{ width: "100%", padding: 6 }}
-                                                    value={editingEmail}
-                                                    onChange={(e) => setEditingEmail(e.target.value)}
-                                                />
-                                            ) : (
-                                                item.email
-                                            )}
-                                        </td>
-                                        <td style={{ padding: 8 }}>
-                                            {editingId === item.id ? (
-                                                <>
-                                                    <button onClick={() => handleSaveEdit(item.id)}>Save</button>
-                                                    <button onClick={handleCancelEdit} style={{ marginLeft: 8 }}>
-                                                        Cancel
-                                                    </button>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <button onClick={() => handleStartEdit(item)}>Edit</button>
-                                                    <button
-                                                        onClick={() => handleDelete(item.id)}
-                                                        style={{ marginLeft: 8 }}
-                                                    >
-                                                        Delete
-                                                    </button>
-                                                </>
-                                            )}
-                                        </td>
+                        <div className="table-wrap">
+                            <table className="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Contact Name</th>
+                                        <th>Email</th>
+                                        <th>Actions</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {companyEmails.map((item) => (
+                                        <tr key={item.id}>
+                                            <td>
+                                                {editingId === item.id ? (
+                                                    <input
+                                                        className="input"
+                                                        value={editingContactName}
+                                                        onChange={(e) =>
+                                                            setEditingContactName(e.target.value)
+                                                        }
+                                                    />
+                                                ) : (
+                                                    item.contactName || "-"
+                                                )}
+                                            </td>
+                                            <td>
+                                                {editingId === item.id ? (
+                                                    <input
+                                                        className="input"
+                                                        value={editingEmail}
+                                                        onChange={(e) =>
+                                                            setEditingEmail(e.target.value)
+                                                        }
+                                                    />
+                                                ) : (
+                                                    item.email
+                                                )}
+                                            </td>
+                                            <td>
+                                                {editingId === item.id ? (
+                                                    <div className="table-actions">
+                                                        <button
+                                                            type="button"
+                                                            className="button button--small"
+                                                            onClick={() => handleSaveEdit(item.id)}
+                                                        >
+                                                            Save
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            className="button button--ghost button--small"
+                                                            onClick={handleCancelEdit}
+                                                        >
+                                                            Cancel
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <div className="table-actions">
+                                                        <button
+                                                            type="button"
+                                                            className="button button--secondary button--small"
+                                                            onClick={() => handleStartEdit(item)}
+                                                        >
+                                                            Edit
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            className="button button--danger button--small"
+                                                            onClick={() => handleDelete(item.id)}
+                                                        >
+                                                            Delete
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     )}
-                </div>
+                </section>
             </div>
         </div>
     );

@@ -1,4 +1,5 @@
-import { FormEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import type { FormEvent } from "react";
 import {
     createCompanyRequest,
     deleteCompanyRequest,
@@ -84,115 +85,144 @@ const CompaniesPage = () => {
     };
 
     if (user?.role !== "ADMIN") {
-        return <p>You do not have permission to view this page.</p>;
+        return (
+            <div className="page-shell">
+                <div className="message message--info">
+                    You do not have permission to view this page.
+                </div>
+            </div>
+        );
     }
 
     return (
-        <div>
-            <h1>Companies</h1>
+        <div className="page-shell">
+            <div className="page-header">
+                <div className="page-header__copy">
+                    <span className="eyebrow">Administration</span>
+                    <h1 className="page-title">Companies</h1>
+                    <p className="page-subtitle">
+                        Maintain the company list that powers your contact records and mailing
+                        workflows.
+                    </p>
+                </div>
 
-            <div
-                style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 2fr",
-                    gap: 24,
-                    alignItems: "start",
-                }}
-            >
-                <div
-                    style={{
-                        border: "1px solid #334155",
-                        padding: 16,
-                        borderRadius: 8,
-                    }}
-                >
-                    <h2>Create Company</h2>
+                <div className="page-actions">
+                    <span className="badge">{companies.length} companies</span>
+                </div>
+            </div>
 
-                    <form onSubmit={handleCreate}>
-                        <div style={{ marginBottom: 12 }}>
-                            <label>Company Name</label>
+            {error && <div className="message message--error">{error}</div>}
+
+            <div className="split-layout">
+                <section className="panel">
+                    <div className="panel__header">
+                        <div>
+                            <span className="eyebrow">Create Company</span>
+                            <h2>Add an organization</h2>
+                        </div>
+                    </div>
+
+                    <form className="form-grid" onSubmit={handleCreate}>
+                        <div className="field">
+                            <label htmlFor="company-name">Company Name</label>
                             <input
-                                style={{ width: "100%", padding: 8 }}
+                                id="company-name"
+                                className="input"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
                             />
                         </div>
 
-                        <button type="submit" disabled={submitting}>
+                        <button type="submit" className="button" disabled={submitting}>
                             {submitting ? "Creating..." : "Create Company"}
                         </button>
                     </form>
-                </div>
+                </section>
 
-                <div
-                    style={{
-                        border: "1px solid #334155",
-                        padding: 16,
-                        borderRadius: 8,
-                    }}
-                >
-                    <h2>Company List</h2>
-
-                    {error && <p style={{ color: "#f87171" }}>{error}</p>}
+                <section className="panel">
+                    <div className="panel__header">
+                        <div>
+                            <span className="eyebrow">Directory</span>
+                            <h2>Company list</h2>
+                        </div>
+                        <span className="badge badge--warm">Editable records</span>
+                    </div>
 
                     {loading ? (
-                        <p>Loading companies...</p>
+                        <div className="empty-state">Loading companies...</div>
                     ) : companies.length === 0 ? (
-                        <p>No companies found.</p>
+                        <div className="empty-state">No companies found.</div>
                     ) : (
-                        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                            <thead>
-                                <tr>
-                                    <th style={{ textAlign: "left", padding: 8 }}>Name</th>
-                                    <th style={{ textAlign: "left", padding: 8 }}>Created</th>
-                                    <th style={{ textAlign: "left", padding: 8 }}>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {companies.map((company) => (
-                                    <tr key={company.id}>
-                                        <td style={{ padding: 8 }}>
-                                            {editingId === company.id ? (
-                                                <input
-                                                    value={editingName}
-                                                    onChange={(e) => setEditingName(e.target.value)}
-                                                    style={{ width: "100%", padding: 6 }}
-                                                />
-                                            ) : (
-                                                company.name
-                                            )}
-                                        </td>
-                                        <td style={{ padding: 8 }}>
-                                            {new Date(company.createdAt).toLocaleString()}
-                                        </td>
-                                        <td style={{ padding: 8 }}>
-                                            {editingId === company.id ? (
-                                                <>
-                                                    <button onClick={() => handleSaveEdit(company.id)}>
-                                                        Save
-                                                    </button>
-                                                    <button onClick={handleCancelEdit} style={{ marginLeft: 8 }}>
-                                                        Cancel
-                                                    </button>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <button onClick={() => handleStartEdit(company)}>Edit</button>
-                                                    <button
-                                                        onClick={() => handleDelete(company.id)}
-                                                        style={{ marginLeft: 8 }}
-                                                    >
-                                                        Delete
-                                                    </button>
-                                                </>
-                                            )}
-                                        </td>
+                        <div className="table-wrap">
+                            <table className="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Created</th>
+                                        <th>Actions</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {companies.map((company) => (
+                                        <tr key={company.id}>
+                                            <td>
+                                                {editingId === company.id ? (
+                                                    <input
+                                                        className="input"
+                                                        value={editingName}
+                                                        onChange={(e) => setEditingName(e.target.value)}
+                                                    />
+                                                ) : (
+                                                    company.name
+                                                )}
+                                            </td>
+                                            <td>
+                                                {new Date(company.createdAt).toLocaleString()}
+                                            </td>
+                                            <td>
+                                                {editingId === company.id ? (
+                                                    <div className="table-actions">
+                                                        <button
+                                                            type="button"
+                                                            className="button button--small"
+                                                            onClick={() => handleSaveEdit(company.id)}
+                                                        >
+                                                            Save
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            className="button button--ghost button--small"
+                                                            onClick={handleCancelEdit}
+                                                        >
+                                                            Cancel
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <div className="table-actions">
+                                                        <button
+                                                            type="button"
+                                                            className="button button--secondary button--small"
+                                                            onClick={() => handleStartEdit(company)}
+                                                        >
+                                                            Edit
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            className="button button--danger button--small"
+                                                            onClick={() => handleDelete(company.id)}
+                                                        >
+                                                            Delete
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     )}
-                </div>
+                </section>
             </div>
         </div>
     );

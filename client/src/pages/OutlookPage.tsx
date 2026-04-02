@@ -63,75 +63,120 @@ const OutlookPage = () => {
     };
 
     return (
-        <div>
-            <h1>Outlook Connection</h1>
+        <div className="page-shell">
+            <div className="page-header">
+                <div className="page-header__copy">
+                    <span className="eyebrow">Delivery Setup</span>
+                    <h1 className="page-title">Outlook Connection</h1>
+                    <p className="page-subtitle">
+                        Connect the correct mailbox so the mail workflow can move from
+                        preview mode to live sending.
+                    </p>
+                </div>
 
-            <p>
-                Connect your Outlook account so the system can send emails using your
-                mailbox.
-            </p>
-
-            {error && <p style={{ color: "#f87171" }}>{error}</p>}
-
-            <div
-                style={{
-                    border: "1px solid #334155",
-                    borderRadius: 8,
-                    padding: 16,
-                    maxWidth: 700,
-                }}
-            >
-                {loading ? (
-                    <p>Loading Outlook status...</p>
-                ) : status?.connected && status.connection ? (
-                    <>
-                        <h2>Connected</h2>
-                        <p>
-                            <strong>Email:</strong> {status.connection.outlookEmail}
-                        </p>
-                        <p>
-                            <strong>Connection Type:</strong> {status.connection.connectionType}
-                        </p>
-                        <p>
-                            <strong>Status:</strong>{" "}
-                            {status.connection.isActive ? "Active" : "Inactive"}
-                        </p>
-
-                        <button onClick={handleDisconnect} disabled={disconnecting}>
-                            {disconnecting ? "Disconnecting..." : "Disconnect Outlook"}
-                        </button>
-                    </>
-                ) : (
-                    <>
-                        <h2>Not Connected</h2>
-                        <p>
-                            {user?.role === "ADMIN"
-                                ? "Admin should connect the company mailbox."
-                                : "Workers should connect their personal company Outlook mailbox."}
-                        </p>
-
-                        <button onClick={handleConnect} disabled={connecting}>
-                            {connecting ? "Connecting..." : "Connect Outlook"}
-                        </button>
-                    </>
-                )}
+                <div className="page-actions">
+                    <span
+                        className={`badge ${
+                            status?.connected ? "badge--success" : "badge--warm"
+                        }`}
+                    >
+                        {status?.connected ? "Connected" : "Pending"}
+                    </span>
+                </div>
             </div>
 
-            <div
-                style={{
-                    marginTop: 20,
-                    border: "1px solid #334155",
-                    borderRadius: 8,
-                    padding: 16,
-                    maxWidth: 700,
-                }}
-            >
-                <h3>Note</h3>
-                <p>
-                    If Microsoft approval or tenant configuration is still pending, the
-                    connection flow may not complete yet. The page and integration are
-                    ready, and you can retry once approval is available.
-                </p>
+            {error && <div className="message message--error">{error}</div>}
+
+            <div className="split-layout split-layout--balanced">
+                <section className="panel">
+                    <div className="panel__header">
+                        <div>
+                            <span className="eyebrow">Mailbox Status</span>
+                            <h2>Connection details</h2>
+                        </div>
+                    </div>
+
+                    {loading ? (
+                        <div className="empty-state">Loading Outlook status...</div>
+                    ) : status?.connected && status.connection ? (
+                        <div className="summary-stack">
+                            <div className="summary-row">
+                                <span>Email</span>
+                                <strong>{status.connection.outlookEmail}</strong>
+                            </div>
+                            <div className="summary-row">
+                                <span>Connection Type</span>
+                                <strong>{status.connection.connectionType}</strong>
+                            </div>
+                            <div className="summary-row">
+                                <span>Status</span>
+                                <span
+                                    className={`badge ${
+                                        status.connection.isActive
+                                            ? "badge--success"
+                                            : "badge--danger"
+                                    }`}
+                                >
+                                    {status.connection.isActive ? "Active" : "Inactive"}
+                                </span>
+                            </div>
+
+                            <button
+                                type="button"
+                                className="button button--danger"
+                                onClick={handleDisconnect}
+                                disabled={disconnecting}
+                            >
+                                {disconnecting ? "Disconnecting..." : "Disconnect Outlook"}
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="form-grid">
+                            <div className="message message--info">
+                                {user?.role === "ADMIN"
+                                    ? "Admins should connect the company mailbox used for team sending."
+                                    : "Workers should connect their personal company Outlook mailbox."}
+                            </div>
+
+                            <button
+                                type="button"
+                                className="button"
+                                onClick={handleConnect}
+                                disabled={connecting}
+                            >
+                                {connecting ? "Connecting..." : "Connect Outlook"}
+                            </button>
+                        </div>
+                    )}
+                </section>
+
+                <section className="panel">
+                    <div className="panel__header">
+                        <div>
+                            <span className="eyebrow">Readiness Note</span>
+                            <h2>What to expect</h2>
+                        </div>
+                    </div>
+
+                    <div className="summary-stack">
+                        <div className="summary-row">
+                            <span>Approval Flow</span>
+                            <strong>Microsoft tenant approval may still be required.</strong>
+                        </div>
+                        <div className="summary-row">
+                            <span>Retry Behavior</span>
+                            <strong>You can reconnect later without changing the UI setup.</strong>
+                        </div>
+                        <div className="summary-row">
+                            <span>Target Mailbox</span>
+                            <strong>
+                                {user?.role === "ADMIN"
+                                    ? "Company shared mailbox"
+                                    : "Personal company mailbox"}
+                            </strong>
+                        </div>
+                    </div>
+                </section>
             </div>
         </div>
     );

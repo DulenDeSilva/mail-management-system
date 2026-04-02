@@ -1,4 +1,4 @@
-import { Link, Outlet, useLocation } from "react-router-dom";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 const MainLayout = () => {
@@ -6,61 +6,87 @@ const MainLayout = () => {
     const location = useLocation();
 
     const navItems = [
-        { label: "Dashboard", path: "/" },
-        { label: "Users", path: "/users" },
-        { label: "Companies", path: "/companies" },
-        { label: "Company Emails", path: "/company-emails" },
-        { label: "Drafts", path: "/drafts" },
-        { label: "Attachments", path: "/attachments" },
-        { label: "Outlook", path: "/outlook" },
-        { label: "Send Mail", path: "/send-mail" },
+        { label: "Dashboard", path: "/", description: "Overview and quick actions" },
+        { label: "Users", path: "/users", description: "Team accounts and access" },
+        { label: "Companies", path: "/companies", description: "Client organization list" },
+        {
+            label: "Company Emails",
+            path: "/company-emails",
+            description: "Contacts inside each company",
+        },
+        { label: "Drafts", path: "/drafts", description: "Reusable email content" },
+        { label: "Attachments", path: "/attachments", description: "Files linked to drafts" },
+        { label: "Outlook", path: "/outlook", description: "Mailbox connection status" },
+        { label: "Send Mail", path: "/send-mail", description: "Compose and preview delivery" },
     ];
-    return (
-        <div style={{ display: "flex", minHeight: "100vh" }}>
-            <aside
-                style={{
-                    width: 240,
-                    background: "#111827",
-                    color: "#fff",
-                    padding: 20,
-                }}
-            >
-                <h2 style={{ marginBottom: 24 }}>Mail System</h2>
 
-                <nav style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+    const activeItem =
+        navItems.find((item) => item.path === location.pathname) ?? navItems[0];
+
+    return (
+        <div className="app-shell">
+            <aside className="app-sidebar">
+                <div className="app-sidebar__brand">
+                    <span className="app-sidebar__eyebrow">Mail Management System</span>
+                    <h2 className="app-sidebar__title">MailFlow Desk</h2>
+                    <p className="app-sidebar__subtitle">
+                        A warmer, full-width workspace for managing drafts, contacts, and
+                        Outlook delivery.
+                    </p>
+                </div>
+
+                <div className="app-sidebar__meta">
+                    <span className="app-sidebar__eyebrow">Workspace Focus</span>
+                    <strong>Desktop-first layout</strong>
+                    <p>
+                        Wide reading space on larger screens, with responsive stacking for
+                        tablets and phones.
+                    </p>
+                </div>
+
+                <nav className="app-sidebar__nav">
                     {navItems.map((item) => (
-                        <Link
+                        <NavLink
                             key={item.path}
                             to={item.path}
-                            style={{
-                                color: location.pathname === item.path ? "#60a5fa" : "#fff",
-                                textDecoration: "none",
-                                padding: "8px 0",
-                            }}
+                            end={item.path === "/"}
+                            className={({ isActive }) =>
+                                `app-nav-link${isActive ? " app-nav-link--active" : ""}`
+                            }
                         >
-                            {item.label}
-                        </Link>
+                            <span>{item.label}</span>
+                            <small>{item.description}</small>
+                        </NavLink>
                     ))}
                 </nav>
+
+                <div className="app-sidebar__footer">
+                    <span className="app-sidebar__eyebrow">Signed In</span>
+                    <strong>{user?.name}</strong>
+                    <p>{user?.email}</p>
+                </div>
             </aside>
 
-            <div style={{ flex: 1, background: "#0f172a", color: "#fff" }}>
-                <header
-                    style={{
-                        padding: "16px 24px",
-                        borderBottom: "1px solid #1e293b",
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                    }}
-                >
-                    <div>
-                        <strong>{user?.name}</strong> ({user?.role})
+            <div className="app-content">
+                <header className="app-topbar">
+                    <div className="app-topbar__meta">
+                        <span className="app-topbar__eyebrow">Current Section</span>
+                        <div className="app-topbar__title">{activeItem.label}</div>
                     </div>
-                    <button onClick={logout}>Logout</button>
+
+                    <div className="app-user-chip">
+                        <div className="app-user-chip__identity">
+                            <strong>{user?.name}</strong>
+                            <span className="muted">{user?.email}</span>
+                        </div>
+                        <span className="app-user-chip__badge">{user?.role}</span>
+                        <button type="button" className="button button--secondary" onClick={logout}>
+                            Logout
+                        </button>
+                    </div>
                 </header>
 
-                <main style={{ padding: 24 }}>
+                <main className="app-main">
                     <Outlet />
                 </main>
             </div>

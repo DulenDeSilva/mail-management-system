@@ -117,60 +117,69 @@ const DraftsPage = () => {
     };
 
     return (
-        <div>
-            <h1>Drafts</h1>
+        <div className="page-shell">
+            <div className="page-header">
+                <div className="page-header__copy">
+                    <span className="eyebrow">Content Studio</span>
+                    <h1 className="page-title">Drafts</h1>
+                    <p className="page-subtitle">
+                        Build reusable email templates, review visibility settings, and keep
+                        subject lines and body content ready for sending.
+                    </p>
+                </div>
 
-            {error && <p style={{ color: "#f87171" }}>{error}</p>}
+                <div className="page-actions">
+                    <span className="badge">{drafts.length} drafts</span>
+                </div>
+            </div>
 
-            <div
-                style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 2fr",
-                    gap: 24,
-                    alignItems: "start",
-                }}
-            >
-                <div
-                    style={{
-                        border: "1px solid #334155",
-                        padding: 16,
-                        borderRadius: 8,
-                    }}
-                >
-                    <h2>Create Draft</h2>
+            {error && <div className="message message--error">{error}</div>}
 
-                    <form onSubmit={handleCreate}>
-                        <div style={{ marginBottom: 12 }}>
-                            <label>Title</label>
+            <div className="split-layout">
+                <section className="panel">
+                    <div className="panel__header">
+                        <div>
+                            <span className="eyebrow">Create Draft</span>
+                            <h2>New message template</h2>
+                        </div>
+                    </div>
+
+                    <form className="form-grid" onSubmit={handleCreate}>
+                        <div className="field">
+                            <label htmlFor="draft-title">Title</label>
                             <input
-                                style={{ width: "100%", padding: 8 }}
+                                id="draft-title"
+                                className="input"
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
                             />
                         </div>
 
-                        <div style={{ marginBottom: 12 }}>
-                            <label>Subject</label>
+                        <div className="field">
+                            <label htmlFor="draft-subject">Subject</label>
                             <input
-                                style={{ width: "100%", padding: 8 }}
+                                id="draft-subject"
+                                className="input"
                                 value={subject}
                                 onChange={(e) => setSubject(e.target.value)}
                             />
                         </div>
 
-                        <div style={{ marginBottom: 12 }}>
-                            <label>Body HTML</label>
+                        <div className="field">
+                            <label htmlFor="draft-body">Body HTML</label>
                             <textarea
-                                style={{ width: "100%", padding: 8, minHeight: 140 }}
+                                id="draft-body"
+                                className="textarea"
                                 value={bodyHtml}
                                 onChange={(e) => setBodyHtml(e.target.value)}
                             />
                         </div>
 
-                        <div style={{ marginBottom: 12 }}>
-                            <label>Visibility</label>
+                        <div className="field">
+                            <label htmlFor="draft-visibility">Visibility</label>
                             <select
-                                style={{ width: "100%", padding: 8 }}
+                                id="draft-visibility"
+                                className="select"
                                 value={visibility}
                                 onChange={(e) =>
                                     setVisibility(e.target.value as DraftVisibility)
@@ -181,69 +190,78 @@ const DraftsPage = () => {
                             </select>
                         </div>
 
-                        <button type="submit" disabled={submitting}>
+                        <button type="submit" className="button" disabled={submitting}>
                             {submitting ? "Creating..." : "Create Draft"}
                         </button>
                     </form>
-                </div>
+                </section>
 
-                <div
-                    style={{
-                        border: "1px solid #334155",
-                        padding: 16,
-                        borderRadius: 8,
-                    }}
-                >
-                    <h2>Draft List</h2>
+                <section className="panel">
+                    <div className="panel__header">
+                        <div>
+                            <span className="eyebrow">Draft Library</span>
+                            <h2>Saved drafts</h2>
+                        </div>
+                        <span className="badge badge--warm">Reusable content</span>
+                    </div>
 
                     {loading ? (
-                        <p>Loading drafts...</p>
+                        <div className="empty-state">Loading drafts...</div>
                     ) : drafts.length === 0 ? (
-                        <p>No drafts found.</p>
+                        <div className="empty-state">No drafts found.</div>
                     ) : (
-                        <div style={{ display: "grid", gap: 16 }}>
+                        <div className="item-list">
                             {drafts.map((draft) => (
-                                <div
-                                    key={draft.id}
-                                    style={{
-                                        border: "1px solid #334155",
-                                        borderRadius: 8,
-                                        padding: 16,
-                                    }}
-                                >
+                                <article key={draft.id} className="item-card">
                                     {editingId === draft.id ? (
-                                        <>
-                                            <div style={{ marginBottom: 12 }}>
-                                                <label>Title</label>
+                                        <div className="form-grid">
+                                            <div className="field">
+                                                <label htmlFor={`edit-title-${draft.id}`}>Title</label>
                                                 <input
-                                                    style={{ width: "100%", padding: 8 }}
+                                                    id={`edit-title-${draft.id}`}
+                                                    className="input"
                                                     value={editingTitle}
-                                                    onChange={(e) => setEditingTitle(e.target.value)}
+                                                    onChange={(e) =>
+                                                        setEditingTitle(e.target.value)
+                                                    }
                                                 />
                                             </div>
 
-                                            <div style={{ marginBottom: 12 }}>
-                                                <label>Subject</label>
+                                            <div className="field">
+                                                <label htmlFor={`edit-subject-${draft.id}`}>
+                                                    Subject
+                                                </label>
                                                 <input
-                                                    style={{ width: "100%", padding: 8 }}
+                                                    id={`edit-subject-${draft.id}`}
+                                                    className="input"
                                                     value={editingSubject}
-                                                    onChange={(e) => setEditingSubject(e.target.value)}
+                                                    onChange={(e) =>
+                                                        setEditingSubject(e.target.value)
+                                                    }
                                                 />
                                             </div>
 
-                                            <div style={{ marginBottom: 12 }}>
-                                                <label>Body HTML</label>
+                                            <div className="field">
+                                                <label htmlFor={`edit-body-${draft.id}`}>
+                                                    Body HTML
+                                                </label>
                                                 <textarea
-                                                    style={{ width: "100%", padding: 8, minHeight: 120 }}
+                                                    id={`edit-body-${draft.id}`}
+                                                    className="textarea"
                                                     value={editingBodyHtml}
-                                                    onChange={(e) => setEditingBodyHtml(e.target.value)}
+                                                    onChange={(e) =>
+                                                        setEditingBodyHtml(e.target.value)
+                                                    }
                                                 />
                                             </div>
 
-                                            <div style={{ marginBottom: 12 }}>
-                                                <label>Visibility</label>
+                                            <div className="field">
+                                                <label htmlFor={`edit-visibility-${draft.id}`}>
+                                                    Visibility
+                                                </label>
                                                 <select
-                                                    style={{ width: "100%", padding: 8 }}
+                                                    id={`edit-visibility-${draft.id}`}
+                                                    className="select"
                                                     value={editingVisibility}
                                                     onChange={(e) =>
                                                         setEditingVisibility(
@@ -256,44 +274,69 @@ const DraftsPage = () => {
                                                 </select>
                                             </div>
 
-                                            <button onClick={() => handleSaveEdit(draft.id)}>
-                                                Save
-                                            </button>
-                                            <button onClick={handleCancelEdit} style={{ marginLeft: 8 }}>
-                                                Cancel
-                                            </button>
-                                        </>
+                                            <div className="button-group">
+                                                <button
+                                                    type="button"
+                                                    className="button"
+                                                    onClick={() => handleSaveEdit(draft.id)}
+                                                >
+                                                    Save
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className="button button--ghost"
+                                                    onClick={handleCancelEdit}
+                                                >
+                                                    Cancel
+                                                </button>
+                                            </div>
+                                        </div>
                                     ) : (
                                         <>
-                                            <h3 style={{ marginBottom: 8 }}>{draft.title}</h3>
-                                            <p>
-                                                <strong>Subject:</strong> {draft.subject}
-                                            </p>
-                                            <p>
-                                                <strong>Visibility:</strong> {draft.visibility}
-                                            </p>
-                                            <p>
-                                                <strong>Created By:</strong>{" "}
-                                                {draft.createdBy?.name || draft.createdById}
-                                            </p>
+                                            <div className="panel__header">
+                                                <div>
+                                                    <h3>{draft.title}</h3>
+                                                    <div className="item-card__meta">
+                                                        <span>
+                                                            Created by{" "}
+                                                            {draft.createdBy?.name || draft.createdById}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <span
+                                                    className={`badge ${
+                                                        draft.visibility === "PERSONAL"
+                                                            ? "badge--warm"
+                                                            : ""
+                                                    }`}
+                                                >
+                                                    {draft.visibility}
+                                                </span>
+                                            </div>
+
+                                            <div className="summary-row">
+                                                <span>Subject</span>
+                                                <strong>{draft.subject}</strong>
+                                            </div>
+
                                             <div
-                                                style={{
-                                                    background: "#0f172a",
-                                                    padding: 12,
-                                                    borderRadius: 6,
-                                                    marginTop: 12,
-                                                }}
+                                                className="rich-preview"
                                                 dangerouslySetInnerHTML={{ __html: draft.bodyHtml }}
                                             />
 
                                             {canEditOrDelete(draft) && (
-                                                <div style={{ marginTop: 12 }}>
-                                                    <button onClick={() => handleStartEdit(draft)}>
+                                                <div className="button-group item-card__actions">
+                                                    <button
+                                                        type="button"
+                                                        className="button button--secondary"
+                                                        onClick={() => handleStartEdit(draft)}
+                                                    >
                                                         Edit
                                                     </button>
                                                     <button
+                                                        type="button"
+                                                        className="button button--danger"
                                                         onClick={() => handleDelete(draft.id)}
-                                                        style={{ marginLeft: 8 }}
                                                     >
                                                         Delete
                                                     </button>
@@ -301,11 +344,11 @@ const DraftsPage = () => {
                                             )}
                                         </>
                                     )}
-                                </div>
+                                </article>
                             ))}
                         </div>
                     )}
-                </div>
+                </section>
             </div>
         </div>
     );
