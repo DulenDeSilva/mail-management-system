@@ -1,4 +1,5 @@
-import { ChangeEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import type { ChangeEvent } from "react";
 import { getDraftsRequest } from "../api/draftsApi";
 import {
     deleteDraftAttachmentRequest,
@@ -10,7 +11,7 @@ import type { Draft } from "../types/draft";
 import type { DraftAttachment } from "../types/attachment";
 
 const AttachmentsPage = () => {
-    const { user } = useAuth();
+    useAuth();
 
     const [drafts, setDrafts] = useState<Draft[]>([]);
     const [selectedDraftId, setSelectedDraftId] = useState<number | "">("");
