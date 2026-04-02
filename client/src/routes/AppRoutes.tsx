@@ -4,6 +4,7 @@ import DashboardPage from "../pages/DashboardPage";
 import UsersPage from "../pages/UsersPage";
 import CompaniesPage from "../pages/CompaniesPage";
 import CompanyEmailsPage from "../pages/CompanyEmailsPage";
+import DraftsPage from "../pages/DraftsPage";
 import ProtectedRoute from "./ProtectedRoute";
 import MainLayout from "../components/layout/MainLayout";
 
@@ -19,6 +20,7 @@ const AppRoutes = () => {
                         <Route path="users" element={<UsersPage />} />
                         <Route path="companies" element={<CompaniesPage />} />
                         <Route path="company-emails" element={<CompanyEmailsPage />} />
+                        <Route path="drafts" element={<DraftsPage />} />
                     </Route>
                 </Route>
 
