@@ -11,6 +11,7 @@ const MainLayout = () => {
         { label: "Companies", path: "/companies" },
         { label: "Company Emails", path: "/company-emails" },
         { label: "Drafts", path: "/drafts" },
+        { label: "Attachments", path: "/attachments" },
         { label: "Outlook", path: "/outlook" },
         { label: "Send Mail", path: "/send-mail" },
     ];
