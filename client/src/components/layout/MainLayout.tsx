@@ -61,8 +61,11 @@ const MainLayout = () => {
     const activeItem =
         allNavItems.find((item) => item.path === location.pathname) ?? allNavItems[0];
 
+    const shellClassName =
+        user?.role === "WORKER" ? "app-shell app-shell--worker" : "app-shell";
+
     return (
-        <div className="app-shell">
+        <div className={shellClassName}>
             <aside className="app-sidebar">
                 <div className="app-sidebar__brand">
                     <span className="app-sidebar__eyebrow">Mail Management System</span>

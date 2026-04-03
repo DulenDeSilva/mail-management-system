@@ -133,14 +133,13 @@ code {
 }
 
 .app-shell {
-  height: 100svh;
+  min-height: 100svh;
   display: grid;
   grid-template-columns: minmax(260px, 290px) minmax(0, 1fr);
-  overflow: hidden;
 }
 
 .app-sidebar {
-  min-height: 100%;
+  min-height: 100svh;
   padding: 24px 20px;
   display: flex;
   flex-direction: column;
@@ -220,10 +219,22 @@ code {
 
 .app-content {
   min-width: 0;
+  padding: 20px clamp(18px, 2.5vw, 32px) 32px;
+}
+
+.app-shell--worker {
+  height: 100svh;
+  overflow: hidden;
+}
+
+.app-shell--worker .app-sidebar {
+  min-height: 100%;
+}
+
+.app-shell--worker .app-content {
   height: 100svh;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 20px clamp(18px, 2.5vw, 32px) 32px;
 }
 
 .app-topbar {
