@@ -5,23 +5,61 @@ const MainLayout = () => {
     const { user, logout } = useAuth();
     const location = useLocation();
 
-    const navItems = [
-        { label: "Dashboard", path: "/", description: "Overview and quick actions" },
-        { label: "Users", path: "/users", description: "Team accounts and access" },
-        { label: "Companies", path: "/companies", description: "Client organization list" },
+    const allNavItems = [
+        {
+            label: "Dashboard",
+            path: "/",
+            description: "Overview and quick actions",
+            adminOnly: false,
+        },
+        {
+            label: "Users",
+            path: "/users",
+            description: "Team accounts and access",
+            adminOnly: true,
+        },
+        {
+            label: "Companies",
+            path: "/companies",
+            description: "Client organization list",
+            adminOnly: true,
+        },
         {
             label: "Company Emails",
             path: "/company-emails",
             description: "Contacts inside each company",
+            adminOnly: true,
         },
-        { label: "Drafts", path: "/drafts", description: "Reusable email content" },
-        { label: "Attachments", path: "/attachments", description: "Files linked to drafts" },
-        { label: "Outlook", path: "/outlook", description: "Mailbox connection status" },
-        { label: "Send Mail", path: "/send-mail", description: "Compose and preview delivery" },
+        {
+            label: "Drafts",
+            path: "/drafts",
+            description: "Reusable email content",
+            adminOnly: false,
+        },
+        {
+            label: "Attachments",
+            path: "/attachments",
+            description: "Files linked to drafts",
+            adminOnly: false,
+        },
+        {
+            label: "Outlook",
+            path: "/outlook",
+            description: "Mailbox connection status",
+            adminOnly: false,
+        },
+        {
+            label: "Send Mail",
+            path: "/send-mail",
+            description: "Compose and preview delivery",
+            adminOnly: false,
+        },
     ];
 
+    const navItems = allNavItems.filter((item) => !item.adminOnly || user?.role === "ADMIN");
+
     const activeItem =
-        navItems.find((item) => item.path === location.pathname) ?? navItems[0];
+        allNavItems.find((item) => item.path === location.pathname) ?? allNavItems[0];
 
     return (
         <div className="app-shell">
@@ -29,19 +67,6 @@ const MainLayout = () => {
                 <div className="app-sidebar__brand">
                     <span className="app-sidebar__eyebrow">Mail Management System</span>
                     <h2 className="app-sidebar__title">MailFlow Desk</h2>
-                    <p className="app-sidebar__subtitle">
-                        A warmer, full-width workspace for managing drafts, contacts, and
-                        Outlook delivery.
-                    </p>
-                </div>
-
-                <div className="app-sidebar__meta">
-                    <span className="app-sidebar__eyebrow">Workspace Focus</span>
-                    <strong>Desktop-first layout</strong>
-                    <p>
-                        Wide reading space on larger screens, with responsive stacking for
-                        tablets and phones.
-                    </p>
                 </div>
 
                 <nav className="app-sidebar__nav">

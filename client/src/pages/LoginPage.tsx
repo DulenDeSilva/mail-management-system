@@ -33,21 +33,6 @@ const LoginPage = () => {
                 <section className="login-card__hero">
                     <span className="eyebrow">Mail Management System</span>
                     <h1>Keep your email operations tidy and ready to send.</h1>
-                    <p>
-                        The interface is tuned for full desktop use first, while still
-                        adapting cleanly on smaller screens for quick checks and updates.
-                    </p>
-
-                    <div className="login-card__stats">
-                        <div className="login-stat">
-                            <strong>Unified workflow</strong>
-                            <p>Users, companies, drafts, attachments, and Outlook in one place.</p>
-                        </div>
-                        <div className="login-stat">
-                            <strong>Warm palette</strong>
-                            <p>Off-white surfaces with the `#343148` brand tone.</p>
-                        </div>
-                    </div>
                 </section>
 
                 <section className="login-card__panel">

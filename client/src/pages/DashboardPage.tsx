@@ -51,28 +51,6 @@ const DashboardPage = () => {
                     </div>
                 </div>
             </section>
-
-            <section className="metrics-grid">
-                <div className="metric-card">
-                    <div className="metric-card__value">Wide</div>
-                    <div className="metric-card__label">
-                        Desktop canvas with more breathing room for form and table-heavy pages.
-                    </div>
-                </div>
-                <div className="metric-card">
-                    <div className="metric-card__value">Warm</div>
-                    <div className="metric-card__label">
-                        Off-white surfaces with `#343148` as the anchor color for contrast.
-                    </div>
-                </div>
-                <div className="metric-card">
-                    <div className="metric-card__value">Responsive</div>
-                    <div className="metric-card__label">
-                        Panels stack cleanly so the same workflows remain usable on phones and
-                        tablets.
-                    </div>
-                </div>
-            </section>
         </div>
     );
 };
