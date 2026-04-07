@@ -1,8 +1,24 @@
+import axios from "axios";
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
-import { createUserRequest, deactivateUserRequest, getUsersRequest } from "../api/usersApi";
+import {
+    createUserRequest,
+    deactivateUserRequest,
+    getUsersRequest,
+    updateUserRequest
+} from "../api/usersApi";
 import { useAuth } from "../context/AuthContext";
 import type { AppUser } from "../types/user";
+
+type ApiErrorResponse = { message?: string };
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+    if (axios.isAxiosError<ApiErrorResponse>(error)) {
+        return error.response?.data?.message || fallback;
+    }
+
+    return fallback;
+};
 
 const UsersPage = () => {
     const { user } = useAuth();
@@ -16,21 +32,26 @@ const UsersPage = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [role, setRole] = useState<"ADMIN" | "WORKER">("WORKER");
+    const [editingId, setEditingId] = useState<number | null>(null);
+    const [editingName, setEditingName] = useState("");
+    const [editingEmail, setEditingEmail] = useState("");
+    const [editingRole, setEditingRole] = useState<"ADMIN" | "WORKER">("WORKER");
 
     const loadUsers = async () => {
         try {
             setLoading(true);
+            setError("");
             const data = await getUsersRequest();
             setUsers(data);
-        } catch (err: any) {
-            setError(err?.response?.data?.message || "Failed to load users");
+        } catch (error: unknown) {
+            setError(getErrorMessage(error, "Failed to load users"));
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        loadUsers();
+        void loadUsers();
     }, []);
 
     const handleCreateUser = async (e: FormEvent) => {
@@ -52,19 +73,50 @@ const UsersPage = () => {
             setRole("WORKER");
 
             await loadUsers();
-        } catch (err: any) {
-            setError(err?.response?.data?.message || "Failed to create user");
+        } catch (error: unknown) {
+            setError(getErrorMessage(error, "Failed to create user"));
         } finally {
             setSubmitting(false);
         }
     };
 
+    const handleStartEdit = (selectedUser: AppUser) => {
+        setEditingId(selectedUser.id);
+        setEditingName(selectedUser.name);
+        setEditingEmail(selectedUser.email);
+        setEditingRole(selectedUser.role);
+        setError("");
+    };
+
+    const handleCancelEdit = () => {
+        setEditingId(null);
+        setEditingName("");
+        setEditingEmail("");
+        setEditingRole("WORKER");
+    };
+
+    const handleSaveEdit = async (userId: number) => {
+        try {
+            setError("");
+            await updateUserRequest(userId, {
+                name: editingName,
+                email: editingEmail,
+                role: editingRole
+            });
+            handleCancelEdit();
+            await loadUsers();
+        } catch (error: unknown) {
+            setError(getErrorMessage(error, "Failed to update user"));
+        }
+    };
+
     const handleDeactivate = async (userId: number) => {
         try {
+            setError("");
             await deactivateUserRequest(userId);
             await loadUsers();
-        } catch (err: any) {
-            setError(err?.response?.data?.message || "Failed to deactivate user");
+        } catch (error: unknown) {
+            setError(getErrorMessage(error, "Failed to deactivate user"));
         }
     };
 
@@ -189,10 +241,46 @@ const UsersPage = () => {
                                 <tbody>
                                     {users.map((item) => (
                                         <tr key={item.id}>
-                                            <td>{item.name}</td>
-                                            <td>{item.email}</td>
                                             <td>
-                                                <span className="badge">{item.role}</span>
+                                                {editingId === item.id ? (
+                                                    <input
+                                                        className="input"
+                                                        value={editingName}
+                                                        onChange={(e) => setEditingName(e.target.value)}
+                                                    />
+                                                ) : (
+                                                    item.name
+                                                )}
+                                            </td>
+                                            <td>
+                                                {editingId === item.id ? (
+                                                    <input
+                                                        type="email"
+                                                        className="input"
+                                                        value={editingEmail}
+                                                        onChange={(e) => setEditingEmail(e.target.value)}
+                                                    />
+                                                ) : (
+                                                    item.email
+                                                )}
+                                            </td>
+                                            <td>
+                                                {editingId === item.id ? (
+                                                    <select
+                                                        className="select"
+                                                        value={editingRole}
+                                                        onChange={(e) =>
+                                                            setEditingRole(
+                                                                e.target.value as "ADMIN" | "WORKER"
+                                                            )
+                                                        }
+                                                    >
+                                                        <option value="WORKER">WORKER</option>
+                                                        <option value="ADMIN">ADMIN</option>
+                                                    </select>
+                                                ) : (
+                                                    <span className="badge">{item.role}</span>
+                                                )}
                                             </td>
                                             <td>
                                                 <span
@@ -206,16 +294,44 @@ const UsersPage = () => {
                                                 </span>
                                             </td>
                                             <td>
-                                                {item.isActive ? (
-                                                    <button
-                                                        type="button"
-                                                        className="button button--danger button--small"
-                                                        onClick={() => handleDeactivate(item.id)}
-                                                    >
-                                                        Deactivate
-                                                    </button>
+                                                {editingId === item.id ? (
+                                                    <div className="table-actions">
+                                                        <button
+                                                            type="button"
+                                                            className="button button--small"
+                                                            onClick={() => handleSaveEdit(item.id)}
+                                                        >
+                                                            Save
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            className="button button--ghost button--small"
+                                                            onClick={handleCancelEdit}
+                                                        >
+                                                            Cancel
+                                                        </button>
+                                                    </div>
                                                 ) : (
-                                                    <span className="muted">Already inactive</span>
+                                                    <div className="table-actions">
+                                                        <button
+                                                            type="button"
+                                                            className="button button--secondary button--small"
+                                                            onClick={() => handleStartEdit(item)}
+                                                        >
+                                                            Edit
+                                                        </button>
+                                                        {item.isActive ? (
+                                                            <button
+                                                                type="button"
+                                                                className="button button--danger button--small"
+                                                                onClick={() => handleDeactivate(item.id)}
+                                                            >
+                                                                Deactivate
+                                                            </button>
+                                                        ) : (
+                                                            <span className="muted">Already inactive</span>
+                                                        )}
+                                                    </div>
                                                 )}
                                             </td>
                                         </tr>

@@ -13,8 +13,10 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             return;
         }
 
+        const normalizedEmail = String(email).trim().toLowerCase();
+
         const user = await prisma.user.findUnique({
-            where: { email }
+            where: { email: normalizedEmail }
         });
 
         if (!user) {

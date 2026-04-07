@@ -5,6 +5,7 @@ import { roleMiddleware } from "../../middleware/role.middleware";
 import {
     createUser,
     getUsers,
+    updateUser,
     deactivateUser
 } from "./users.controller";
 
@@ -31,6 +32,13 @@ router.get(
     authMiddleware,
     roleMiddleware(["ADMIN"]),
     getUsers
+);
+
+router.put(
+    "/:id",
+    authMiddleware,
+    roleMiddleware(["ADMIN"]),
+    updateUser
 );
 
 router.patch(

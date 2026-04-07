@@ -16,8 +16,16 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
             return;
         }
 
+        const trimmedName = String(name).trim();
+        const normalizedEmail = String(email).trim().toLowerCase();
+
+        if (!trimmedName || !normalizedEmail) {
+            res.status(400).json({ message: "Name and email cannot be empty" });
+            return;
+        }
+
         const existingUser = await prisma.user.findUnique({
-            where: { email }
+            where: { email: normalizedEmail }
         });
 
         if (existingUser) {
@@ -29,8 +37,8 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
 
         const user = await prisma.user.create({
             data: {
-                name,
-                email,
+                name: trimmedName,
+                email: normalizedEmail,
                 passwordHash,
                 role
             },
@@ -73,6 +81,84 @@ export const getUsers = async (_req: Request, res: Response): Promise<void> => {
         res.status(200).json(users);
     } catch (error) {
         console.error("Get users error:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+export const updateUser = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const userId = Number(req.params.id);
+        const { name, email, role } = req.body;
+
+        if (Number.isNaN(userId)) {
+            res.status(400).json({ message: "Invalid user id" });
+            return;
+        }
+
+        if (!name || !email || !role) {
+            res.status(400).json({ message: "Name, email and role are required" });
+            return;
+        }
+
+        if (!["ADMIN", "WORKER"].includes(role)) {
+            res.status(400).json({ message: "Invalid role" });
+            return;
+        }
+
+        const trimmedName = String(name).trim();
+        const normalizedEmail = String(email).trim().toLowerCase();
+
+        if (!trimmedName || !normalizedEmail) {
+            res.status(400).json({ message: "Name and email cannot be empty" });
+            return;
+        }
+
+        const existingUser = await prisma.user.findUnique({
+            where: { id: userId }
+        });
+
+        if (!existingUser) {
+            res.status(404).json({ message: "User not found" });
+            return;
+        }
+
+        const duplicateUser = await prisma.user.findFirst({
+            where: {
+                email: normalizedEmail,
+                NOT: {
+                    id: userId
+                }
+            }
+        });
+
+        if (duplicateUser) {
+            res.status(409).json({ message: "Email is already in use" });
+            return;
+        }
+
+        const user = await prisma.user.update({
+            where: { id: userId },
+            data: {
+                name: trimmedName,
+                email: normalizedEmail,
+                role
+            },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                isActive: true,
+                createdAt: true
+            }
+        });
+
+        res.status(200).json({
+            message: "User updated successfully",
+            user
+        });
+    } catch (error) {
+        console.error("Update user error:", error);
         res.status(500).json({ message: "Internal server error" });
     }
 };
