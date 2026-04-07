@@ -48,6 +48,12 @@ const MainLayout = () => {
             description: "Compose and preview delivery",
             adminOnly: false,
         },
+        {
+            label: "Mail Logs",
+            path: "/mail-logs",
+            description: "Delivery audit history",
+            adminOnly: true,
+        },
     ];
 
     const navItems = allNavItems.filter((item) => !item.adminOnly || user?.role === "ADMIN");

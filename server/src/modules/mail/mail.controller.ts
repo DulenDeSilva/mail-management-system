@@ -168,3 +168,76 @@ export const sendMail = async (
         });
     }
 };
+
+export const getMailLogs = async (
+    _req: AuthRequest,
+    res: Response
+): Promise<void> => {
+    try {
+        const mailLogs = await prisma.mailLog.findMany({
+            orderBy: {
+                sentAt: "desc"
+            },
+            select: {
+                id: true,
+                workerName: true,
+                workerEmail: true,
+                senderEmail: true,
+                senderType: true,
+                subjectSnapshot: true,
+                bodySnapshot: true,
+                sentAt: true,
+                sentByUser: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true
+                    }
+                },
+                draft: {
+                    select: {
+                        id: true,
+                        title: true,
+                        subject: true
+                    }
+                },
+                recipients: {
+                    orderBy: [
+                        {
+                            recipientType: "asc"
+                        },
+                        {
+                            id: "asc"
+                        }
+                    ],
+                    select: {
+                        id: true,
+                        recipientEmail: true,
+                        recipientType: true,
+                        sourceType: true,
+                        company: {
+                            select: {
+                                id: true,
+                                name: true
+                            }
+                        },
+                        companyEmail: {
+                            select: {
+                                id: true,
+                                contactName: true,
+                                email: true
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        res.status(200).json(mailLogs);
+    } catch (error) {
+        console.error("Get mail logs error:", error);
+        res.status(500).json({
+            message: "Failed to load mail logs"
+        });
+    }
+};
