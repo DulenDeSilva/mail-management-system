@@ -33,33 +33,17 @@ enum RecipientSourceType {
 }
 
 model User {
-  id                Int                 @id @default(autoincrement())
-  name              String
-  email             String              @unique
-  passwordHash      String
-  role              UserRole
-  isActive          Boolean             @default(true)
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
+  id           Int       @id @default(autoincrement())
+  name         String
+  email        String    @unique
+  passwordHash String
+  role         UserRole
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
-  drafts            Draft[]
-  outlookConnection OutlookConnection?
-  mailLogs          MailLog[]
-}
-
-model OutlookConnection {
-  id               Int      @id @default(autoincrement())
-  userId           Int      @unique
-  outlookEmail     String
-  connectionType   SenderType
-  refreshTokenEnc  String
-  accessTokenEnc   String?
-  tokenExpiresAt   DateTime?
-  isActive         Boolean  @default(true)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  drafts       Draft[]
+  mailLogs     MailLog[]
 }
 
 model Company {
@@ -85,57 +69,59 @@ model CompanyEmail {
 }
 
 model Draft {
-  id            Int              @id @default(autoincrement())
-  title         String
-  subject       String
-  bodyHtml      String
-  visibility    DraftVisibility
-  createdById   Int
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
+  id          Int              @id @default(autoincrement())
+  title       String
+  subject     String
+  bodyHtml    String
+  visibility  DraftVisibility
+  createdById Int
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 
-  createdBy     User             @relation(fields: [createdById], references: [id], onDelete: Cascade)
-  attachments   DraftAttachment[]
-  mailLogs      MailLog[]
+  createdBy   User             @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  attachments DraftAttachment[]
+  mailLogs    MailLog[]
 }
 
 model DraftAttachment {
-  id          Int      @id @default(autoincrement())
-  draftId     Int
-  fileName    String
-  filePath    String
-  mimeType    String
-  sizeBytes   Int
-  createdAt   DateTime @default(now())
+  id        Int      @id @default(autoincrement())
+  draftId   Int
+  fileName  String
+  filePath  String
+  mimeType  String
+  sizeBytes Int
+  createdAt DateTime @default(now())
 
-  draft       Draft    @relation(fields: [draftId], references: [id], onDelete: Cascade)
+  draft     Draft    @relation(fields: [draftId], references: [id], onDelete: Cascade)
 }
 
 model MailLog {
-  id              Int               @id @default(autoincrement())
+  id              Int        @id @default(autoincrement())
   sentByUserId    Int
+  workerName      String
+  workerEmail     String
   senderEmail     String
   senderType      SenderType
   draftId         Int?
   subjectSnapshot String
   bodySnapshot    String
-  sentAt          DateTime          @default(now())
+  sentAt          DateTime   @default(now())
 
-  sentByUser      User              @relation(fields: [sentByUserId], references: [id], onDelete: Cascade)
-  draft           Draft?            @relation(fields: [draftId], references: [id], onDelete: SetNull)
+  sentByUser      User       @relation(fields: [sentByUserId], references: [id], onDelete: Cascade)
+  draft           Draft?     @relation(fields: [draftId], references: [id], onDelete: SetNull)
   recipients      MailLogRecipient[]
 }
 
 model MailLogRecipient {
-  id               Int                 @id @default(autoincrement())
-  mailLogId        Int
-  companyId        Int?
-  companyEmailId   Int?
-  recipientEmail   String
-  recipientType    RecipientType
-  sourceType       RecipientSourceType
+  id              Int                 @id @default(autoincrement())
+  mailLogId       Int
+  companyId       Int?
+  companyEmailId  Int?
+  recipientEmail  String
+  recipientType   RecipientType
+  sourceType      RecipientSourceType
 
-  mailLog          MailLog             @relation(fields: [mailLogId], references: [id], onDelete: Cascade)
-  company          Company?            @relation(fields: [companyId], references: [id], onDelete: SetNull)
-  companyEmail     CompanyEmail?       @relation(fields: [companyEmailId], references: [id], onDelete: SetNull)
+  mailLog         MailLog             @relation(fields: [mailLogId], references: [id], onDelete: Cascade)
+  company         Company?            @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  companyEmail    CompanyEmail?       @relation(fields: [companyEmailId], references: [id], onDelete: SetNull)
 }

@@ -1,11 +1,16 @@
 import { Response } from "express";
+import { Prisma } from "@prisma/client";
 import prisma from "../../config/prisma";
+import { smtpConfig } from "../../config/smtp";
 import { AuthRequest } from "../../middleware/auth.middleware";
 import { sendMailViaSmtp } from "./mail.service";
 
-export const sendMail = async (req: AuthRequest, res: Response): Promise<void> => {
+export const sendMail = async (
+    req: AuthRequest,
+    res: Response
+): Promise<void> => {
     try {
-        const { draftId, companyEmailIds, cc, replyTo } = req.body;
+        const { draftId, companyEmailIds, cc } = req.body;
 
         if (!req.user) {
             res.status(401).json({ message: "Unauthorized" });
@@ -19,6 +24,7 @@ export const sendMail = async (req: AuthRequest, res: Response): Promise<void> =
 
         const draft = await prisma.draft.findUnique({
             where: { id: Number(draftId) },
+            include: { attachments: true }
         });
 
         if (!draft) {
@@ -26,10 +32,29 @@ export const sendMail = async (req: AuthRequest, res: Response): Promise<void> =
             return;
         }
 
+        const canSend =
+            req.user.role === "ADMIN" ||
+            draft.visibility === "SHARED" ||
+            draft.createdById === req.user.userId;
+
+        if (!canSend) {
+            res.status(403).json({ message: "Forbidden" });
+            return;
+        }
+
+        const recipientIds = companyEmailIds
+            .map((id: unknown) => Number(id))
+            .filter((id: number) => !Number.isNaN(id));
+
+        if (recipientIds.length === 0) {
+            res.status(400).json({ message: "No valid recipient ids provided" });
+            return;
+        }
+
         const recipients = await prisma.companyEmail.findMany({
             where: {
-                id: { in: companyEmailIds.map(Number) },
-            },
+                id: { in: recipientIds }
+            }
         });
 
         if (recipients.length === 0) {
@@ -37,52 +62,74 @@ export const sendMail = async (req: AuthRequest, res: Response): Promise<void> =
             return;
         }
 
-        const attachments = await prisma.draftAttachment.findMany({
-            where: { draftId: draft.id },
-        });
+        const cleanedCc = Array.isArray(cc)
+            ? cc.map((item: unknown) => String(item).trim()).filter((item: string) => item.length > 0)
+            : [];
 
         const htmlWithFooter = `
-      ${draft.bodyHtml}
-      <hr />
-      <p>Handled by: ${req.user.email}</p>
-    `;
+            ${draft.bodyHtml}
+            <hr />
+            <p><strong>Sent by:</strong> ${req.user.name}</p>
+            <p><strong>Contact:</strong> ${req.user.email}</p>
+        `;
 
-        const mailResult = await sendMailViaSmtp({
+        await sendMailViaSmtp({
             to: recipients.map((r) => r.email),
-            cc: Array.isArray(cc) ? cc : [],
-            replyTo: replyTo || undefined,
+            cc: cleanedCc,
             subject: draft.subject,
             html: htmlWithFooter,
-            attachments: attachments.map((item) => ({
+            workerName: req.user.name,
+            workerEmail: req.user.email,
+            attachments: draft.attachments.map((item) => ({
                 filename: item.fileName,
                 path: item.filePath,
-                contentType: item.mimeType,
-            })),
+                contentType: item.mimeType
+            }))
         });
 
+        const mailLogData = {
+            sentByUserId: req.user.userId,
+            workerName: req.user.name,
+            workerEmail: req.user.email,
+            senderEmail: smtpConfig.fromEmail,
+            senderType:
+                req.user.role === "ADMIN"
+                    ? "ADMIN_COMPANY"
+                    : "WORKER_PERSONAL",
+            draftId: draft.id,
+            subjectSnapshot: draft.subject,
+            bodySnapshot: htmlWithFooter,
+            recipients: {
+                create: [
+                    ...recipients.map((r) => ({
+                        companyId: r.companyId,
+                        companyEmailId: r.id,
+                        recipientEmail: r.email,
+                        recipientType: "TO" as const,
+                        sourceType: "SYSTEM" as const
+                    })),
+                    ...cleanedCc.map((email) => ({
+                        companyId: null,
+                        companyEmailId: null,
+                        recipientEmail: email,
+                        recipientType: "CC" as const,
+                        sourceType: "MANUAL_CC" as const
+                    }))
+                ]
+            }
+        } satisfies Prisma.MailLogUncheckedCreateInput;
+
         await prisma.mailLog.create({
-            data: {
-                sentByUserId: req.user.userId,
-                draftId: draft.id,
-                fromEmail: process.env.SMTP_FROM_EMAIL || "",
-                replyTo: replyTo || null,
-                subjectSnapshot: draft.subject,
-                bodySnapshot: htmlWithFooter,
-                toEmailsJson: JSON.stringify(recipients.map((r) => r.email)),
-                ccEmailsJson: JSON.stringify(Array.isArray(cc) ? cc : []),
-                status: "SENT",
-                providerMessageId: mailResult.messageId || null,
-            },
+            data: mailLogData
         });
 
         res.status(200).json({
-            message: "Mail sent successfully",
+            message: "Mail sent successfully"
         });
-    } catch (error: any) {
+    } catch (error) {
         console.error("Send mail error:", error);
-
         res.status(500).json({
-            message: "Failed to send mail",
+            message: "Failed to send mail"
         });
     }
 };

@@ -7,29 +7,38 @@ export const transporter = nodemailer.createTransport({
   secure: smtpConfig.secure,
   auth: {
     user: smtpConfig.user,
-    pass: smtpConfig.pass,
-  },
+    pass: smtpConfig.pass
+  }
 });
 
-export const sendMailViaSmtp = async (options: {
+type SendMailOptions = {
   to: string[];
   cc?: string[];
   subject: string;
   html: string;
-  replyTo?: string;
+  workerName: string;
+  workerEmail: string;
   attachments?: Array<{
     filename: string;
     path: string;
     contentType?: string;
   }>;
-}) => {
+};
+
+export const sendMailViaSmtp = async (options: SendMailOptions) => {
+  const fromDisplay = `${options.workerName} via ${smtpConfig.fromName}`;
+
   return transporter.sendMail({
-    from: `"${smtpConfig.fromName}" <${smtpConfig.fromEmail}>`,
+    from: `"${fromDisplay}" <${smtpConfig.fromEmail}>`,
     to: options.to.join(", "),
     cc: options.cc?.length ? options.cc.join(", ") : undefined,
-    replyTo: options.replyTo,
+    replyTo: options.workerEmail,
     subject: options.subject,
     html: options.html,
     attachments: options.attachments,
+    headers: {
+      "X-Worker-Name": options.workerName,
+      "X-Worker-Email": options.workerEmail
+    }
   });
 };

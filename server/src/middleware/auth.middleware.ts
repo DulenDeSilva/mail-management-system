@@ -6,6 +6,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "secret";
 export interface AuthRequest extends Request {
     user?: {
         userId: number;
+        name: string;
         email: string;
         role: string;
     };
@@ -28,13 +29,14 @@ export const authMiddleware = (
 
         const decoded = jwt.verify(token, JWT_SECRET) as {
             userId: number;
+            name: string;
             email: string;
             role: string;
         };
 
         req.user = decoded;
         next();
-    } catch (error) {
+    } catch (_error) {
         res.status(401).json({ message: "Invalid or expired token" });
     }
 };
