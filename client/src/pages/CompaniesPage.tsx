@@ -1,3 +1,4 @@
+import axios from "axios";
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import {
@@ -6,8 +7,18 @@ import {
     getCompaniesRequest,
     updateCompanyRequest,
 } from "../api/companiesApi";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 import type { Company } from "../types/company";
+
+type ApiErrorResponse = { message?: string };
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+    if (axios.isAxiosError<ApiErrorResponse>(error)) {
+        return error.response?.data?.message || fallback;
+    }
+
+    return fallback;
+};
 
 const CompaniesPage = () => {
     const { user } = useAuth();
@@ -27,15 +38,15 @@ const CompaniesPage = () => {
             setLoading(true);
             const data = await getCompaniesRequest();
             setCompanies(data);
-        } catch (err: any) {
-            setError(err?.response?.data?.message || "Failed to load companies");
+        } catch (error: unknown) {
+            setError(getErrorMessage(error, "Failed to load companies"));
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        loadCompanies();
+        void loadCompanies();
     }, []);
 
     const handleCreate = async (e: FormEvent) => {
@@ -47,8 +58,8 @@ const CompaniesPage = () => {
             await createCompanyRequest({ name });
             setName("");
             await loadCompanies();
-        } catch (err: any) {
-            setError(err?.response?.data?.message || "Failed to create company");
+        } catch (error: unknown) {
+            setError(getErrorMessage(error, "Failed to create company"));
         } finally {
             setSubmitting(false);
         }
@@ -70,8 +81,8 @@ const CompaniesPage = () => {
             setEditingId(null);
             setEditingName("");
             await loadCompanies();
-        } catch (err: any) {
-            setError(err?.response?.data?.message || "Failed to update company");
+        } catch (error: unknown) {
+            setError(getErrorMessage(error, "Failed to update company"));
         }
     };
 
@@ -79,8 +90,8 @@ const CompaniesPage = () => {
         try {
             await deleteCompanyRequest(companyId);
             await loadCompanies();
-        } catch (err: any) {
-            setError(err?.response?.data?.message || "Failed to delete company");
+        } catch (error: unknown) {
+            setError(getErrorMessage(error, "Failed to delete company"));
         }
     };
 

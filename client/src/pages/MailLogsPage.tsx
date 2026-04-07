@@ -1,7 +1,7 @@
 import axios from "axios";
 import { useEffect, useMemo, useState } from "react";
 import { getMailLogsRequest } from "../api/mailApi";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 import type { MailLog, MailLogRecipient } from "../types/mailLog";
 
 type ApiErrorResponse = { message?: string };

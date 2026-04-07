@@ -7,7 +7,7 @@ import {
     getUsersRequest,
     updateUserRequest
 } from "../api/usersApi";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 import type { AppUser } from "../types/user";
 
 type ApiErrorResponse = { message?: string };

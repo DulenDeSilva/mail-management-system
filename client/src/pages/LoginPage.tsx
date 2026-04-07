@@ -1,7 +1,18 @@
+import axios from "axios";
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
+
+type ApiErrorResponse = { message?: string };
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+    if (axios.isAxiosError<ApiErrorResponse>(error)) {
+        return error.response?.data?.message || fallback;
+    }
+
+    return fallback;
+};
 
 const LoginPage = () => {
     const navigate = useNavigate();
@@ -20,8 +31,8 @@ const LoginPage = () => {
             setSubmitting(true);
             await login(email, password);
             navigate("/");
-        } catch (err: any) {
-            setError(err?.response?.data?.message || "Login failed");
+        } catch (error: unknown) {
+            setError(getErrorMessage(error, "Login failed"));
         } finally {
             setSubmitting(false);
         }

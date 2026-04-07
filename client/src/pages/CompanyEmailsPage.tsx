@@ -1,3 +1,4 @@
+import axios from "axios";
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { getCompaniesRequest } from "../api/companiesApi";
@@ -7,9 +8,19 @@ import {
     getCompanyEmailsRequest,
     updateCompanyEmailRequest,
 } from "../api/companyEmailsApi";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 import type { Company } from "../types/company";
 import type { CompanyEmail } from "../types/companyEmail";
+
+type ApiErrorResponse = { message?: string };
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+    if (axios.isAxiosError<ApiErrorResponse>(error)) {
+        return error.response?.data?.message || fallback;
+    }
+
+    return fallback;
+};
 
 const CompanyEmailsPage = () => {
     const { user } = useAuth();
@@ -34,8 +45,8 @@ const CompanyEmailsPage = () => {
             setLoadingCompanies(true);
             const data = await getCompaniesRequest();
             setCompanies(data);
-        } catch (err: any) {
-            setError(err?.response?.data?.message || "Failed to load companies");
+        } catch (error: unknown) {
+            setError(getErrorMessage(error, "Failed to load companies"));
         } finally {
             setLoadingCompanies(false);
         }
@@ -46,20 +57,20 @@ const CompanyEmailsPage = () => {
             setLoadingEmails(true);
             const data = await getCompanyEmailsRequest(companyId);
             setCompanyEmails(data);
-        } catch (err: any) {
-            setError(err?.response?.data?.message || "Failed to load company emails");
+        } catch (error: unknown) {
+            setError(getErrorMessage(error, "Failed to load company emails"));
         } finally {
             setLoadingEmails(false);
         }
     };
 
     useEffect(() => {
-        loadCompanies();
+        void loadCompanies();
     }, []);
 
     useEffect(() => {
         if (selectedCompanyId !== "") {
-            loadCompanyEmails(Number(selectedCompanyId));
+            void loadCompanyEmails(Number(selectedCompanyId));
         } else {
             setCompanyEmails([]);
         }
@@ -84,8 +95,8 @@ const CompanyEmailsPage = () => {
             setContactName("");
             setEmail("");
             await loadCompanyEmails(Number(selectedCompanyId));
-        } catch (err: any) {
-            setError(err?.response?.data?.message || "Failed to create company email");
+        } catch (error: unknown) {
+            setError(getErrorMessage(error, "Failed to create company email"));
         } finally {
             setSubmitting(false);
         }
@@ -117,8 +128,8 @@ const CompanyEmailsPage = () => {
             if (selectedCompanyId !== "") {
                 await loadCompanyEmails(Number(selectedCompanyId));
             }
-        } catch (err: any) {
-            setError(err?.response?.data?.message || "Failed to update company email");
+        } catch (error: unknown) {
+            setError(getErrorMessage(error, "Failed to update company email"));
         }
     };
 
@@ -129,8 +140,8 @@ const CompanyEmailsPage = () => {
             if (selectedCompanyId !== "") {
                 await loadCompanyEmails(Number(selectedCompanyId));
             }
-        } catch (err: any) {
-            setError(err?.response?.data?.message || "Failed to delete company email");
+        } catch (error: unknown) {
+            setError(getErrorMessage(error, "Failed to delete company email"));
         }
     };
 

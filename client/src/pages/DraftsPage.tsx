@@ -1,3 +1,4 @@
+import axios from "axios";
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import {
@@ -6,8 +7,18 @@ import {
     getDraftsRequest,
     updateDraftRequest,
 } from "../api/draftsApi";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 import type { Draft, DraftVisibility } from "../types/draft";
+
+type ApiErrorResponse = { message?: string };
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+    if (axios.isAxiosError<ApiErrorResponse>(error)) {
+        return error.response?.data?.message || fallback;
+    }
+
+    return fallback;
+};
 
 const DraftsPage = () => {
     const { user } = useAuth();
@@ -34,15 +45,15 @@ const DraftsPage = () => {
             setLoading(true);
             const data = await getDraftsRequest();
             setDrafts(data);
-        } catch (err: any) {
-            setError(err?.response?.data?.message || "Failed to load drafts");
+        } catch (error: unknown) {
+            setError(getErrorMessage(error, "Failed to load drafts"));
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        loadDrafts();
+        void loadDrafts();
     }, []);
 
     const handleCreate = async (e: FormEvent) => {
@@ -64,8 +75,8 @@ const DraftsPage = () => {
             setVisibility("SHARED");
 
             await loadDrafts();
-        } catch (err: any) {
-            setError(err?.response?.data?.message || "Failed to create draft");
+        } catch (error: unknown) {
+            setError(getErrorMessage(error, "Failed to create draft"));
         } finally {
             setSubmitting(false);
         }
@@ -98,8 +109,8 @@ const DraftsPage = () => {
 
             handleCancelEdit();
             await loadDrafts();
-        } catch (err: any) {
-            setError(err?.response?.data?.message || "Failed to update draft");
+        } catch (error: unknown) {
+            setError(getErrorMessage(error, "Failed to update draft"));
         }
     };
 
@@ -107,8 +118,8 @@ const DraftsPage = () => {
         try {
             await deleteDraftRequest(draftId);
             await loadDrafts();
-        } catch (err: any) {
-            setError(err?.response?.data?.message || "Failed to delete draft");
+        } catch (error: unknown) {
+            setError(getErrorMessage(error, "Failed to delete draft"));
         }
     };
 

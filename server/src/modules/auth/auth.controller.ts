@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import prisma from "../../config/prisma";
 import { comparePassword } from "../../utils/password";
+import { hashPassword } from "../../utils/password";
 import { generateToken } from "../../utils/jwt";
 import { AuthRequest } from "../../middleware/auth.middleware";
 
@@ -45,7 +46,9 @@ export const login = async (req: Request, res: Response): Promise<void> => {
                 id: user.id,
                 name: user.name,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                isActive: user.isActive,
+                createdAt: user.createdAt
             }
         });
     } catch (error) {
@@ -81,6 +84,118 @@ export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
         res.status(200).json(user);
     } catch (error) {
         console.error("Get me error:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+export const updateMe = async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+        if (!req.user) {
+            res.status(401).json({ message: "Unauthorized" });
+            return;
+        }
+
+        const { name, email, currentPassword, newPassword } = req.body as {
+            name?: unknown;
+            email?: unknown;
+            currentPassword?: unknown;
+            newPassword?: unknown;
+        };
+
+        const trimmedName = String(name ?? "").trim();
+        const normalizedEmail = String(email ?? "").trim().toLowerCase();
+        const currentPasswordValue = String(currentPassword ?? "");
+        const newPasswordValue = String(newPassword ?? "");
+
+        if (!trimmedName || !normalizedEmail) {
+            res.status(400).json({ message: "Name and email are required" });
+            return;
+        }
+
+        if ((currentPasswordValue && !newPasswordValue) || (!currentPasswordValue && newPasswordValue)) {
+            res.status(400).json({
+                message: "Current password and new password must be provided together"
+            });
+            return;
+        }
+
+        if (newPasswordValue && newPasswordValue.length < 6) {
+            res.status(400).json({
+                message: "New password must be at least 6 characters long"
+            });
+            return;
+        }
+
+        const existingUser = await prisma.user.findUnique({
+            where: { id: req.user.userId }
+        });
+
+        if (!existingUser) {
+            res.status(404).json({ message: "User not found" });
+            return;
+        }
+
+        const duplicateUser = await prisma.user.findFirst({
+            where: {
+                email: normalizedEmail,
+                NOT: {
+                    id: req.user.userId
+                }
+            }
+        });
+
+        if (duplicateUser) {
+            res.status(409).json({ message: "Email is already in use" });
+            return;
+        }
+
+        let passwordHash = existingUser.passwordHash;
+
+        if (currentPasswordValue && newPasswordValue) {
+            const isCurrentPasswordValid = await comparePassword(
+                currentPasswordValue,
+                existingUser.passwordHash
+            );
+
+            if (!isCurrentPasswordValid) {
+                res.status(401).json({ message: "Current password is incorrect" });
+                return;
+            }
+
+            passwordHash = await hashPassword(newPasswordValue);
+        }
+
+        const updatedUser = await prisma.user.update({
+            where: { id: req.user.userId },
+            data: {
+                name: trimmedName,
+                email: normalizedEmail,
+                passwordHash
+            },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                isActive: true,
+                createdAt: true
+            }
+        });
+
+        const token = generateToken({
+            userId: updatedUser.id,
+            name: updatedUser.name,
+            email: updatedUser.email,
+            role: updatedUser.role
+        });
+
+        res.status(200).json({
+            message: "Profile updated successfully",
+            token,
+            user: updatedUser
+        });
+    } catch (error) {
+        console.error("Update me error:", error);
         res.status(500).json({ message: "Internal server error" });
     }
 };

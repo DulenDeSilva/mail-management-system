@@ -1,11 +1,22 @@
+import axios from "axios";
 import { useEffect, useState } from "react";
 import {
     disconnectOutlookRequest,
     getOutlookConnectRequest,
     getOutlookStatusRequest,
 } from "../api/outlookApi";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 import type { OutlookStatusResponse } from "../types/outlook";
+
+type ApiErrorResponse = { message?: string };
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+    if (axios.isAxiosError<ApiErrorResponse>(error)) {
+        return error.response?.data?.message || fallback;
+    }
+
+    return fallback;
+};
 
 const OutlookPage = () => {
     const { user } = useAuth();
@@ -21,15 +32,15 @@ const OutlookPage = () => {
             setLoading(true);
             const data = await getOutlookStatusRequest();
             setStatus(data);
-        } catch (err: any) {
-            setError(err?.response?.data?.message || "Failed to load Outlook status");
+        } catch (error: unknown) {
+            setError(getErrorMessage(error, "Failed to load Outlook status"));
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        loadStatus();
+        void loadStatus();
     }, []);
 
     const handleConnect = async () => {
@@ -42,8 +53,8 @@ const OutlookPage = () => {
             if (data.authUrl) {
                 window.location.href = data.authUrl;
             }
-        } catch (err: any) {
-            setError(err?.response?.data?.message || "Failed to start Outlook connection");
+        } catch (error: unknown) {
+            setError(getErrorMessage(error, "Failed to start Outlook connection"));
         } finally {
             setConnecting(false);
         }
@@ -55,8 +66,8 @@ const OutlookPage = () => {
             setError("");
             await disconnectOutlookRequest();
             await loadStatus();
-        } catch (err: any) {
-            setError(err?.response?.data?.message || "Failed to disconnect Outlook");
+        } catch (error: unknown) {
+            setError(getErrorMessage(error, "Failed to disconnect Outlook"));
         } finally {
             setDisconnecting(false);
         }

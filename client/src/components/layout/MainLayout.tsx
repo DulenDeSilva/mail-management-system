@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/useAuth";
 
 const MainLayout = () => {
     const { user, logout } = useAuth();
@@ -10,6 +10,12 @@ const MainLayout = () => {
             label: "Dashboard",
             path: "/",
             description: "Overview and quick actions",
+            adminOnly: false,
+        },
+        {
+            label: "Profile",
+            path: "/profile",
+            description: "Your account details",
             adminOnly: false,
         },
         {
