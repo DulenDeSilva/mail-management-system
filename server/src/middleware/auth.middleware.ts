@@ -1,15 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import type { JwtUserPayload } from "../utils/jwt";
 
 const JWT_SECRET = process.env.JWT_SECRET || "secret";
 
 export interface AuthRequest extends Request {
-    user?: {
-        userId: number;
-        name: string;
-        email: string;
-        role: string;
-    };
+    user?: JwtUserPayload;
 }
 
 export const authMiddleware = (
@@ -27,12 +23,7 @@ export const authMiddleware = (
 
         const token = authHeader.split(" ")[1];
 
-        const decoded = jwt.verify(token, JWT_SECRET) as {
-            userId: number;
-            name: string;
-            email: string;
-            role: string;
-        };
+        const decoded = jwt.verify(token, JWT_SECRET) as JwtUserPayload;
 
         req.user = decoded;
         next();

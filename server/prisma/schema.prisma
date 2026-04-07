@@ -72,7 +72,7 @@ model Draft {
   id          Int              @id @default(autoincrement())
   title       String
   subject     String
-  bodyHtml    String
+  bodyHtml    String           @db.LongText
   visibility  DraftVisibility
   createdById Int
   createdAt   DateTime         @default(now())
@@ -103,8 +103,8 @@ model MailLog {
   senderEmail     String
   senderType      SenderType
   draftId         Int?
-  subjectSnapshot String
-  bodySnapshot    String
+  subjectSnapshot String     @db.Text
+  bodySnapshot    String     @db.LongText
   sentAt          DateTime   @default(now())
 
   sentByUser      User       @relation(fields: [sentByUserId], references: [id], onDelete: Cascade)

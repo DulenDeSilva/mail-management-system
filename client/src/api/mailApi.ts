@@ -1,11 +1,16 @@
 import api from "./axios";
 
-export const sendMailRequest = async (payload: {
+export interface SendMailPayload {
     draftId: number;
     companyEmailIds: number[];
     cc?: string[];
-    replyTo?: string;
-}) => {
-    const response = await api.post("/mail/send", payload);
+}
+
+export interface SendMailResponse {
+    message: string;
+}
+
+export const sendMailRequest = async (payload: SendMailPayload) => {
+    const response = await api.post<SendMailResponse>("/mail/send", payload);
     return response.data;
 };

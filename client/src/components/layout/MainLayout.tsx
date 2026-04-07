@@ -43,12 +43,6 @@ const MainLayout = () => {
             adminOnly: false,
         },
         {
-            label: "Outlook",
-            path: "/outlook",
-            description: "Mailbox connection status",
-            adminOnly: false,
-        },
-        {
             label: "Send Mail",
             path: "/send-mail",
             description: "Compose and preview delivery",

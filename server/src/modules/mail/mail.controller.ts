@@ -1,5 +1,11 @@
 import { Response } from "express";
-import { Prisma } from "@prisma/client";
+import {
+    Prisma,
+    RecipientSourceType,
+    RecipientType,
+    SenderType,
+    UserRole
+} from "@prisma/client";
 import prisma from "../../config/prisma";
 import { smtpConfig } from "../../config/smtp";
 import { AuthRequest } from "../../middleware/auth.middleware";
@@ -10,7 +16,11 @@ export const sendMail = async (
     res: Response
 ): Promise<void> => {
     try {
-        const { draftId, companyEmailIds, cc } = req.body;
+        const { draftId, companyEmailIds, cc } = req.body as {
+            draftId?: unknown;
+            companyEmailIds?: unknown;
+            cc?: unknown;
+        };
 
         if (!req.user) {
             res.status(401).json({ message: "Unauthorized" });
@@ -22,8 +32,15 @@ export const sendMail = async (
             return;
         }
 
+        const parsedDraftId = Number(draftId);
+
+        if (Number.isNaN(parsedDraftId)) {
+            res.status(400).json({ message: "Invalid draft id provided" });
+            return;
+        }
+
         const draft = await prisma.draft.findUnique({
-            where: { id: Number(draftId) },
+            where: { id: parsedDraftId },
             include: { attachments: true }
         });
 
@@ -42,9 +59,13 @@ export const sendMail = async (
             return;
         }
 
-        const recipientIds = companyEmailIds
-            .map((id: unknown) => Number(id))
-            .filter((id: number) => !Number.isNaN(id));
+        const recipientIds = Array.from(
+            new Set(
+                companyEmailIds
+                    .map((id: unknown) => Number(id))
+                    .filter((id: number) => !Number.isNaN(id))
+            )
+        );
 
         if (recipientIds.length === 0) {
             res.status(400).json({ message: "No valid recipient ids provided" });
@@ -63,7 +84,13 @@ export const sendMail = async (
         }
 
         const cleanedCc = Array.isArray(cc)
-            ? cc.map((item: unknown) => String(item).trim()).filter((item: string) => item.length > 0)
+            ? Array.from(
+                  new Set(
+                      cc
+                          .map((item: unknown) => String(item).trim())
+                          .filter((item: string) => item.length > 0)
+                  )
+              )
             : [];
 
         const htmlWithFooter = `
@@ -87,37 +114,45 @@ export const sendMail = async (
             }))
         });
 
-        const mailLogData = {
-            sentByUserId: req.user.userId,
+        const recipientCreates: Prisma.MailLogRecipientCreateWithoutMailLogInput[] = [
+            ...recipients.map((recipient) => ({
+                recipientEmail: recipient.email,
+                recipientType: RecipientType.TO,
+                sourceType: RecipientSourceType.SYSTEM,
+                company: {
+                    connect: { id: recipient.companyId }
+                },
+                companyEmail: {
+                    connect: { id: recipient.id }
+                }
+            })),
+            ...cleanedCc.map((email) => ({
+                recipientEmail: email,
+                recipientType: RecipientType.CC,
+                sourceType: RecipientSourceType.MANUAL_CC
+            }))
+        ];
+
+        const mailLogData: Prisma.MailLogCreateInput = {
             workerName: req.user.name,
             workerEmail: req.user.email,
             senderEmail: smtpConfig.fromEmail,
             senderType:
-                req.user.role === "ADMIN"
-                    ? "ADMIN_COMPANY"
-                    : "WORKER_PERSONAL",
-            draftId: draft.id,
+                req.user.role === UserRole.ADMIN
+                    ? SenderType.ADMIN_COMPANY
+                    : SenderType.WORKER_PERSONAL,
             subjectSnapshot: draft.subject,
             bodySnapshot: htmlWithFooter,
+            sentByUser: {
+                connect: { id: req.user.userId }
+            },
+            draft: {
+                connect: { id: draft.id }
+            },
             recipients: {
-                create: [
-                    ...recipients.map((r) => ({
-                        companyId: r.companyId,
-                        companyEmailId: r.id,
-                        recipientEmail: r.email,
-                        recipientType: "TO" as const,
-                        sourceType: "SYSTEM" as const
-                    })),
-                    ...cleanedCc.map((email) => ({
-                        companyId: null,
-                        companyEmailId: null,
-                        recipientEmail: email,
-                        recipientType: "CC" as const,
-                        sourceType: "MANUAL_CC" as const
-                    }))
-                ]
+                create: recipientCreates
             }
-        } satisfies Prisma.MailLogUncheckedCreateInput;
+        };
 
         await prisma.mailLog.create({
             data: mailLogData

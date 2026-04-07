@@ -12,9 +12,9 @@ const DashboardPage = () => {
                     <span className="eyebrow">Operations Overview</span>
                     <h1>Welcome back, {firstName}.</h1>
                     <p>
-                        Keep users, companies, drafts, attachments, and Outlook delivery in
-                        one calmer workspace built for wide desktop screens and responsive
-                        follow-up on smaller devices.
+                        Keep users, companies, drafts, attachments, and shared mailbox
+                        delivery in one calmer workspace built for wide desktop screens and
+                        responsive follow-up on smaller devices.
                     </p>
 
                     <div className="button-group section-heading">

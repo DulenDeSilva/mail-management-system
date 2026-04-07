@@ -1,13 +1,24 @@
+import axios from "axios";
 import { useEffect, useMemo, useState } from "react";
 import { getCompaniesRequest } from "../api/companiesApi";
 import { getCompanyEmailsRequest } from "../api/companyEmailsApi";
 import { getDraftsRequest } from "../api/draftsApi";
+import { sendMailRequest } from "../api/mailApi";
 import type { Company } from "../types/company";
 import type { CompanyEmail } from "../types/companyEmail";
 import type { Draft } from "../types/draft";
 
 type CompanyEmailMap = Record<number, CompanyEmail[]>;
 type SelectedEmailMap = Record<number, boolean>;
+type ApiErrorResponse = { message?: string };
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+    if (axios.isAxiosError<ApiErrorResponse>(error)) {
+        return error.response?.data?.message || fallback;
+    }
+
+    return fallback;
+};
 
 const SendMailPage = () => {
     const [drafts, setDrafts] = useState<Draft[]>([]);
@@ -18,11 +29,14 @@ const SendMailPage = () => {
     const [selectedDraftId, setSelectedDraftId] = useState<number | "">("");
     const [manualCc, setManualCc] = useState("");
     const [loading, setLoading] = useState(true);
+    const [sending, setSending] = useState(false);
     const [error, setError] = useState("");
+    const [statusMessage, setStatusMessage] = useState("");
 
     const loadInitialData = async () => {
         try {
             setLoading(true);
+            setError("");
 
             const [draftsData, companiesData] = await Promise.all([
                 getDraftsRequest(),
@@ -49,15 +63,15 @@ const SendMailPage = () => {
 
             setCompanyEmailsMap(emailMap);
             setExpandedCompanies(expandedMap);
-        } catch (err: any) {
-            setError(err?.response?.data?.message || "Failed to load send mail data");
+        } catch (error: unknown) {
+            setError(getErrorMessage(error, "Failed to load send mail data"));
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        loadInitialData();
+        void loadInitialData();
     }, []);
 
     const selectedDraft = useMemo(
@@ -140,12 +154,23 @@ const SendMailPage = () => {
         return selectedCount > 0 && selectedCount < emails.length;
     };
 
-    const manualCcList = manualCc
-        .split(",")
-        .map((item) => item.trim())
-        .filter(Boolean);
+    const manualCcList = useMemo(
+        () =>
+            Array.from(
+                new Set(
+                    manualCc
+                        .split(",")
+                        .map((item) => item.trim())
+                        .filter(Boolean)
+                )
+            ),
+        [manualCc]
+    );
 
-    const handleMockSend = () => {
+    const handleSend = async () => {
+        setError("");
+        setStatusMessage("");
+
         if (!selectedDraftId) {
             setError("Please select a draft");
             return;
@@ -156,7 +181,21 @@ const SendMailPage = () => {
             return;
         }
 
-        alert("UI flow ready. Real Outlook send will be connected after approval.");
+        try {
+            setSending(true);
+
+            await sendMailRequest({
+                draftId: selectedDraftId,
+                companyEmailIds: selectedRecipientList.map((recipient) => recipient.id),
+                cc: manualCcList.length > 0 ? manualCcList : undefined,
+            });
+
+            setStatusMessage("Mail sent successfully through the shared mailbox.");
+        } catch (error: unknown) {
+            setError(getErrorMessage(error, "Failed to send mail"));
+        } finally {
+            setSending(false);
+        }
     };
 
     return (
@@ -166,9 +205,9 @@ const SendMailPage = () => {
                     <span className="eyebrow">Delivery Planner</span>
                     <h1 className="page-title">Send Mail</h1>
                     <p className="page-subtitle">
-                        Select the draft, choose company recipients, add any manual CC list,
-                        and review the delivery summary before the live send integration is
-                        switched on.
+                        Select a saved draft, choose company recipients, add any manual CC
+                        list, and send through the shared SMTP mailbox with your identity
+                        preserved in the sender display and reply-to headers.
                     </p>
                 </div>
 
@@ -179,6 +218,7 @@ const SendMailPage = () => {
             </div>
 
             {error && <div className="message message--error">{error}</div>}
+            {statusMessage && <div className="message message--info">{statusMessage}</div>}
 
             {loading ? (
                 <div className="panel">
@@ -430,13 +470,18 @@ const SendMailPage = () => {
                         )}
 
                         <div className="form-grid form-grid--spaced">
-                            <button type="button" className="button" onClick={handleMockSend}>
-                                Send Mail
+                            <button
+                                type="button"
+                                className="button"
+                                onClick={handleSend}
+                                disabled={sending}
+                            >
+                                {sending ? "Sending..." : "Send Mail"}
                             </button>
 
                             <div className="message message--info">
-                                Real email sending will be connected once Outlook
-                                permission/testing is ready.
+                                Outbound mail is sent from the shared mailbox. Replies go to
+                                the currently signed-in worker.
                             </div>
                         </div>
                     </aside>
