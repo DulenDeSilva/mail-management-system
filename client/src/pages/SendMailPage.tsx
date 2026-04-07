@@ -37,17 +37,39 @@ const SendMailPage = () => {
         try {
             setLoading(true);
             setError("");
-
-            const [draftsData, companiesData] = await Promise.all([
+            const loadErrors: string[] = [];
+            const [draftsResult, companiesResult] = await Promise.allSettled([
                 getDraftsRequest(),
                 getCompaniesRequest(),
             ]);
 
-            setDrafts(draftsData);
-            setCompanies(companiesData);
+            if (draftsResult.status === "fulfilled") {
+                setDrafts(draftsResult.value);
+            } else {
+                setDrafts([]);
+                loadErrors.push(getErrorMessage(draftsResult.reason, "Failed to load drafts"));
+            }
 
-            const emailResults = await Promise.all(
-                companiesData.map(async (company) => {
+            if (companiesResult.status === "fulfilled") {
+                setCompanies(companiesResult.value);
+            } else {
+                setCompanies([]);
+                setCompanyEmailsMap({});
+                setExpandedCompanies({});
+                loadErrors.push(
+                    getErrorMessage(companiesResult.reason, "Failed to load companies")
+                );
+            }
+
+            if (companiesResult.status !== "fulfilled") {
+                if (loadErrors.length > 0) {
+                    setError(loadErrors.join(" "));
+                }
+                return;
+            }
+
+            const emailResults = await Promise.allSettled(
+                companiesResult.value.map(async (company) => {
                     const emails = await getCompanyEmailsRequest(company.id);
                     return { companyId: company.id, emails };
                 })
@@ -56,13 +78,25 @@ const SendMailPage = () => {
             const emailMap: CompanyEmailMap = {};
             const expandedMap: Record<number, boolean> = {};
 
-            emailResults.forEach(({ companyId, emails }) => {
-                emailMap[companyId] = emails;
-                expandedMap[companyId] = emails.length > 0;
+            emailResults.forEach((result) => {
+                if (result.status === "fulfilled") {
+                    const { companyId, emails } = result.value;
+                    emailMap[companyId] = emails;
+                    expandedMap[companyId] = emails.length > 0;
+                    return;
+                }
+
+                loadErrors.push(
+                    getErrorMessage(result.reason, "Failed to load some company emails")
+                );
             });
 
             setCompanyEmailsMap(emailMap);
             setExpandedCompanies(expandedMap);
+
+            if (loadErrors.length > 0) {
+                setError(loadErrors.join(" "));
+            }
         } catch (error: unknown) {
             setError(getErrorMessage(error, "Failed to load send mail data"));
         } finally {
@@ -205,9 +239,9 @@ const SendMailPage = () => {
                     <span className="eyebrow">Delivery Planner</span>
                     <h1 className="page-title">Send Mail</h1>
                     <p className="page-subtitle">
-                        Select a saved draft, choose company recipients, add any manual CC
-                        list, and send through the shared SMTP mailbox with your identity
-                        preserved in the sender display and reply-to headers.
+                        Select a shared draft or one you created, choose company recipients,
+                        add any manual CC list, and send through the shared SMTP mailbox with
+                        your identity preserved in the sender display and reply-to headers.
                     </p>
                 </div>
 

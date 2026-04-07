@@ -2,6 +2,7 @@ import { Response } from "express";
 import fs from "fs";
 import prisma from "../../config/prisma";
 import { AuthRequest } from "../../middleware/auth.middleware";
+import { canAccessDraft } from "../drafts/draft-access";
 
 export const uploadDraftAttachment = async (
     req: AuthRequest,
@@ -110,10 +111,7 @@ export const getDraftAttachments = async (
             return;
         }
 
-        const canView =
-            req.user.role === "ADMIN" ||
-            draft.visibility === "SHARED" ||
-            draft.createdById === req.user.userId;
+        const canView = canAccessDraft(req.user, draft);
 
         if (!canView) {
             res.status(403).json({ message: "Forbidden" });

@@ -9,6 +9,7 @@ import {
 import prisma from "../../config/prisma";
 import { smtpConfig } from "../../config/smtp";
 import { AuthRequest } from "../../middleware/auth.middleware";
+import { canAccessDraft } from "../drafts/draft-access";
 import { sendMailViaSmtp } from "./mail.service";
 
 export const sendMail = async (
@@ -49,10 +50,7 @@ export const sendMail = async (
             return;
         }
 
-        const canSend =
-            req.user.role === "ADMIN" ||
-            draft.visibility === "SHARED" ||
-            draft.createdById === req.user.userId;
+        const canSend = canAccessDraft(req.user, draft);
 
         if (!canSend) {
             res.status(403).json({ message: "Forbidden" });

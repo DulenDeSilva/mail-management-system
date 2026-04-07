@@ -1,6 +1,7 @@
 import { Response } from "express";
 import prisma from "../../config/prisma";
 import { AuthRequest } from "../../middleware/auth.middleware";
+import { canAccessDraft, getAccessibleDraftWhere } from "./draft-access";
 
 export const createDraft = async (
     req: AuthRequest,
@@ -57,14 +58,7 @@ export const getDrafts = async (
         }
 
         const drafts = await prisma.draft.findMany({
-            where: req.user.role === "ADMIN"
-                ? {}
-                : {
-                    OR: [
-                        { visibility: "SHARED" },
-                        { createdById: req.user.userId }
-                    ]
-                },
+            where: getAccessibleDraftWhere(req.user),
             include: {
                 createdBy: {
                     select: {
@@ -121,10 +115,7 @@ export const getDraftById = async (
             return;
         }
 
-        const canView =
-            req.user.role === "ADMIN" ||
-            draft.visibility === "SHARED" ||
-            draft.createdById === req.user.userId;
+        const canView = canAccessDraft(req.user, draft);
 
         if (!canView) {
             res.status(403).json({ message: "Forbidden" });

@@ -20,7 +20,7 @@ router.post(
 router.get(
     "/company/:companyId",
     authMiddleware,
-    roleMiddleware(["ADMIN"]),
+    roleMiddleware(["ADMIN", "WORKER"]),
     getCompanyEmails
 );
 
