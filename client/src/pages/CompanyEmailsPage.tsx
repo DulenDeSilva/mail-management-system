@@ -11,6 +11,7 @@ import {
 import { useAuth } from "../context/useAuth";
 import type { Company } from "../types/company";
 import type { CompanyEmail } from "../types/companyEmail";
+import { getEmailValidationError, normalizeEmail } from "../utils/email";
 
 type ApiErrorResponse = { message?: string };
 
@@ -85,11 +86,18 @@ const CompanyEmailsPage = () => {
             return;
         }
 
+        const emailError = getEmailValidationError(email);
+
+        if (emailError) {
+            setError(emailError);
+            return;
+        }
+
         try {
             setSubmitting(true);
             await createCompanyEmailRequest(Number(selectedCompanyId), {
                 contactName,
-                email,
+                email: normalizeEmail(email),
             });
 
             setContactName("");
@@ -115,10 +123,17 @@ const CompanyEmailsPage = () => {
     };
 
     const handleSaveEdit = async (emailId: number) => {
+        const emailError = getEmailValidationError(editingEmail);
+
+        if (emailError) {
+            setError(emailError);
+            return;
+        }
+
         try {
             await updateCompanyEmailRequest(emailId, {
                 contactName: editingContactName,
-                email: editingEmail,
+                email: normalizeEmail(editingEmail),
             });
 
             setEditingId(null);

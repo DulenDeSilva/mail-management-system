@@ -4,6 +4,7 @@ import { comparePassword } from "../../utils/password";
 import { hashPassword } from "../../utils/password";
 import { generateToken } from "../../utils/jwt";
 import { AuthRequest } from "../../middleware/auth.middleware";
+import { validateAndNormalizeEmail } from "../../utils/email";
 
 export const login = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -14,10 +15,15 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             return;
         }
 
-        const normalizedEmail = String(email).trim().toLowerCase();
+        const emailResult = validateAndNormalizeEmail(email);
+
+        if ("error" in emailResult) {
+            res.status(400).json({ message: emailResult.error });
+            return;
+        }
 
         const user = await prisma.user.findUnique({
-            where: { email: normalizedEmail }
+            where: { email: emailResult.email }
         });
 
         if (!user) {
@@ -108,12 +114,17 @@ export const updateMe = async (req: AuthRequest, res: Response): Promise<void> =
         };
 
         const trimmedName = String(name ?? "").trim();
-        const normalizedEmail = String(email ?? "").trim().toLowerCase();
+        const emailResult = validateAndNormalizeEmail(email);
         const currentPasswordValue = String(currentPassword ?? "");
         const newPasswordValue = String(newPassword ?? "");
 
-        if (!trimmedName || !normalizedEmail) {
+        if (!trimmedName) {
             res.status(400).json({ message: "Name and email are required" });
+            return;
+        }
+
+        if ("error" in emailResult) {
+            res.status(400).json({ message: emailResult.error });
             return;
         }
 
@@ -142,7 +153,7 @@ export const updateMe = async (req: AuthRequest, res: Response): Promise<void> =
 
         const duplicateUser = await prisma.user.findFirst({
             where: {
-                email: normalizedEmail,
+                email: emailResult.email,
                 NOT: {
                     id: req.user.userId
                 }
@@ -174,7 +185,7 @@ export const updateMe = async (req: AuthRequest, res: Response): Promise<void> =
             where: { id: req.user.userId },
             data: {
                 name: trimmedName,
-                email: normalizedEmail,
+                email: emailResult.email,
                 passwordHash
             },
             select: {

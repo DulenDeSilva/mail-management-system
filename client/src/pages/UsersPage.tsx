@@ -9,6 +9,7 @@ import {
 } from "../api/usersApi";
 import { useAuth } from "../context/useAuth";
 import type { AppUser } from "../types/user";
+import { getEmailValidationError, normalizeEmail } from "../utils/email";
 
 type ApiErrorResponse = { message?: string };
 
@@ -58,11 +59,18 @@ const UsersPage = () => {
         e.preventDefault();
         setError("");
 
+        const emailError = getEmailValidationError(email);
+
+        if (emailError) {
+            setError(emailError);
+            return;
+        }
+
         try {
             setSubmitting(true);
             await createUserRequest({
                 name,
-                email,
+                email: normalizeEmail(email),
                 password,
                 role,
             });
@@ -96,11 +104,18 @@ const UsersPage = () => {
     };
 
     const handleSaveEdit = async (userId: number) => {
+        const emailError = getEmailValidationError(editingEmail);
+
+        if (emailError) {
+            setError(emailError);
+            return;
+        }
+
         try {
             setError("");
             await updateUserRequest(userId, {
                 name: editingName,
-                email: editingEmail,
+                email: normalizeEmail(editingEmail),
                 role: editingRole
             });
             handleCancelEdit();

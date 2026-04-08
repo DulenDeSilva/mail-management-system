@@ -9,6 +9,10 @@ import {
 import prisma from "../../config/prisma";
 import { smtpConfig } from "../../config/smtp";
 import { AuthRequest } from "../../middleware/auth.middleware";
+import {
+    validateAndNormalizeEmail,
+    validateAndNormalizeEmailList
+} from "../../utils/email";
 import { canAccessDraft } from "../drafts/draft-access";
 import { sendMailViaSmtp } from "./mail.service";
 
@@ -81,15 +85,37 @@ export const sendMail = async (
             return;
         }
 
-        const cleanedCc = Array.isArray(cc)
-            ? Array.from(
-                  new Set(
-                      cc
-                          .map((item: unknown) => String(item).trim())
-                          .filter((item: string) => item.length > 0)
-                  )
-              )
-            : [];
+        const normalizedRecipients = [];
+        const seenToEmails = new Set<string>();
+
+        for (const recipient of recipients) {
+            const emailResult = validateAndNormalizeEmail(
+                recipient.email,
+                `Recipient email for contact ${recipient.id}`
+            );
+
+            if ("error" in emailResult) {
+                res.status(400).json({ message: emailResult.error });
+                return;
+            }
+
+            if (!seenToEmails.has(emailResult.email)) {
+                seenToEmails.add(emailResult.email);
+                normalizedRecipients.push({
+                    ...recipient,
+                    normalizedEmail: emailResult.email
+                });
+            }
+        }
+
+        const ccResult = validateAndNormalizeEmailList(cc, "CC");
+
+        if ("error" in ccResult) {
+            res.status(400).json({ message: ccResult.error });
+            return;
+        }
+
+        const cleanedCc = ccResult.emails.filter((email) => !seenToEmails.has(email));
 
         const htmlWithFooter = `
             ${draft.bodyHtml}
@@ -99,7 +125,7 @@ export const sendMail = async (
         `;
 
         await sendMailViaSmtp({
-            to: recipients.map((r) => r.email),
+            to: normalizedRecipients.map((recipient) => recipient.normalizedEmail),
             cc: cleanedCc,
             subject: draft.subject,
             html: htmlWithFooter,
@@ -113,8 +139,8 @@ export const sendMail = async (
         });
 
         const recipientCreates: Prisma.MailLogRecipientCreateWithoutMailLogInput[] = [
-            ...recipients.map((recipient) => ({
-                recipientEmail: recipient.email,
+            ...normalizedRecipients.map((recipient) => ({
+                recipientEmail: recipient.normalizedEmail,
                 recipientType: RecipientType.TO,
                 sourceType: RecipientSourceType.SYSTEM,
                 company: {

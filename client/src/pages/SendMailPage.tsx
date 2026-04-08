@@ -7,6 +7,7 @@ import { sendMailRequest } from "../api/mailApi";
 import type { Company } from "../types/company";
 import type { CompanyEmail } from "../types/companyEmail";
 import type { Draft } from "../types/draft";
+import { getEmailValidationError, normalizeEmail, normalizeEmailList } from "../utils/email";
 
 type CompanyEmailMap = Record<number, CompanyEmail[]>;
 type SelectedEmailMap = Record<number, boolean>;
@@ -188,17 +189,33 @@ const SendMailPage = () => {
         return selectedCount > 0 && selectedCount < emails.length;
     };
 
+    const selectedRecipientEmailSet = useMemo(() => {
+        const emails = new Set<string>();
+
+        selectedRecipientList.forEach((recipient) => {
+            emails.add(normalizeEmail(recipient.email));
+        });
+
+        return emails;
+    }, [selectedRecipientList]);
+
+    const parsedManualCcList = useMemo(() => normalizeEmailList(manualCc), [manualCc]);
+
+    const invalidManualCc = useMemo(() => {
+        for (const email of parsedManualCcList) {
+            const emailError = getEmailValidationError(email, "CC email");
+
+            if (emailError) {
+                return emailError;
+            }
+        }
+
+        return null;
+    }, [parsedManualCcList]);
+
     const manualCcList = useMemo(
-        () =>
-            Array.from(
-                new Set(
-                    manualCc
-                        .split(",")
-                        .map((item) => item.trim())
-                        .filter(Boolean)
-                )
-            ),
-        [manualCc]
+        () => parsedManualCcList.filter((email) => !selectedRecipientEmailSet.has(email)),
+        [parsedManualCcList, selectedRecipientEmailSet]
     );
 
     const handleSend = async () => {
@@ -212,6 +229,11 @@ const SendMailPage = () => {
 
         if (selectedRecipientList.length === 0) {
             setError("Please select at least one recipient");
+            return;
+        }
+
+        if (invalidManualCc) {
+            setError(invalidManualCc);
             return;
         }
 

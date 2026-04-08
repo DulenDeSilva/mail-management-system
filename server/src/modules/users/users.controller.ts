@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import prisma from "../../config/prisma";
 import { hashPassword } from "../../utils/password";
+import { validateAndNormalizeEmail } from "../../utils/email";
 
 export const createUser = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -17,15 +18,20 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
         }
 
         const trimmedName = String(name).trim();
-        const normalizedEmail = String(email).trim().toLowerCase();
+        const emailResult = validateAndNormalizeEmail(email);
 
-        if (!trimmedName || !normalizedEmail) {
+        if (!trimmedName) {
             res.status(400).json({ message: "Name and email cannot be empty" });
             return;
         }
 
+        if ("error" in emailResult) {
+            res.status(400).json({ message: emailResult.error });
+            return;
+        }
+
         const existingUser = await prisma.user.findUnique({
-            where: { email: normalizedEmail }
+            where: { email: emailResult.email }
         });
 
         if (existingUser) {
@@ -38,7 +44,7 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
         const user = await prisma.user.create({
             data: {
                 name: trimmedName,
-                email: normalizedEmail,
+                email: emailResult.email,
                 passwordHash,
                 role
             },
@@ -106,10 +112,15 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
         }
 
         const trimmedName = String(name).trim();
-        const normalizedEmail = String(email).trim().toLowerCase();
+        const emailResult = validateAndNormalizeEmail(email);
 
-        if (!trimmedName || !normalizedEmail) {
+        if (!trimmedName) {
             res.status(400).json({ message: "Name and email cannot be empty" });
+            return;
+        }
+
+        if ("error" in emailResult) {
+            res.status(400).json({ message: emailResult.error });
             return;
         }
 
@@ -124,7 +135,7 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
 
         const duplicateUser = await prisma.user.findFirst({
             where: {
-                email: normalizedEmail,
+                email: emailResult.email,
                 NOT: {
                     id: userId
                 }
@@ -140,7 +151,7 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
             where: { id: userId },
             data: {
                 name: trimmedName,
-                email: normalizedEmail,
+                email: emailResult.email,
                 role
             },
             select: {

@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import prisma from "../../config/prisma";
+import { validateAndNormalizeEmail } from "../../utils/email";
 
 export const createCompanyEmail = async (
     req: Request,
@@ -14,8 +15,10 @@ export const createCompanyEmail = async (
             return;
         }
 
-        if (!email || !email.trim()) {
-            res.status(400).json({ message: "Email is required" });
+        const emailResult = validateAndNormalizeEmail(email);
+
+        if ("error" in emailResult) {
+            res.status(400).json({ message: emailResult.error });
             return;
         }
 
@@ -31,8 +34,8 @@ export const createCompanyEmail = async (
         const companyEmail = await prisma.companyEmail.create({
             data: {
                 companyId,
-                contactName: contactName?.trim() || null,
-                email: email.trim()
+                contactName: typeof contactName === "string" ? contactName.trim() || null : null,
+                email: emailResult.email
             }
         });
 
@@ -92,8 +95,10 @@ export const updateCompanyEmail = async (
             return;
         }
 
-        if (!email || !email.trim()) {
-            res.status(400).json({ message: "Email is required" });
+        const emailResult = validateAndNormalizeEmail(email);
+
+        if ("error" in emailResult) {
+            res.status(400).json({ message: emailResult.error });
             return;
         }
 
@@ -109,8 +114,8 @@ export const updateCompanyEmail = async (
         const updatedEmail = await prisma.companyEmail.update({
             where: { id: emailId },
             data: {
-                contactName: contactName?.trim() || null,
-                email: email.trim()
+                contactName: typeof contactName === "string" ? contactName.trim() || null : null,
+                email: emailResult.email
             }
         });
 

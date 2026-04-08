@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { updateMeRequest } from "../api/authApi";
 import { useAuth } from "../context/useAuth";
+import { getEmailValidationError, normalizeEmail } from "../utils/email";
 
 type ApiErrorResponse = { message?: string };
 
@@ -41,6 +42,13 @@ const ProfilePage = () => {
             return;
         }
 
+        const emailError = getEmailValidationError(email);
+
+        if (emailError) {
+            setError(emailError);
+            return;
+        }
+
         if (newPassword || currentPassword || confirmPassword) {
             if (!currentPassword || !newPassword) {
                 setError("Current password and new password are required to change password");
@@ -58,7 +66,7 @@ const ProfilePage = () => {
 
             const data = await updateMeRequest({
                 name: name.trim(),
-                email: email.trim(),
+                email: normalizeEmail(email),
                 currentPassword: currentPassword || undefined,
                 newPassword: newPassword || undefined
             });
