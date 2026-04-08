@@ -20,3 +20,8 @@ export const deactivateUserRequest = async (userId: number) => {
     const response = await api.patch(`/users/${userId}/deactivate`);
     return response.data;
 };
+
+export const activateUserRequest = async (userId: number) => {
+    const response = await api.patch(`/users/${userId}/activate`);
+    return response.data;
+};

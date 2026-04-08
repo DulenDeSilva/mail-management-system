@@ -213,3 +213,43 @@ export const deactivateUser = async (req: Request, res: Response): Promise<void>
         res.status(500).json({ message: "Internal server error" });
     }
 };
+
+export const activateUser = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const userId = Number(req.params.id);
+
+        if (Number.isNaN(userId)) {
+            res.status(400).json({ message: "Invalid user id" });
+            return;
+        }
+
+        const existingUser = await prisma.user.findUnique({
+            where: { id: userId }
+        });
+
+        if (!existingUser) {
+            res.status(404).json({ message: "User not found" });
+            return;
+        }
+
+        const user = await prisma.user.update({
+            where: { id: userId },
+            data: { isActive: true },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                isActive: true
+            }
+        });
+
+        res.status(200).json({
+            message: "User activated successfully",
+            user
+        });
+    } catch (error) {
+        console.error("Activate user error:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};

@@ -6,7 +6,8 @@ import {
     createUser,
     getUsers,
     updateUser,
-    deactivateUser
+    deactivateUser,
+    activateUser
 } from "./users.controller";
 
 const router = Router();
@@ -46,6 +47,13 @@ router.patch(
     authMiddleware,
     roleMiddleware(["ADMIN"]),
     deactivateUser
+);
+
+router.patch(
+    "/:id/activate",
+    authMiddleware,
+    roleMiddleware(["ADMIN"]),
+    activateUser
 );
 
 export default router;

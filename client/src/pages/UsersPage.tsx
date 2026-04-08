@@ -2,6 +2,7 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import {
+    activateUserRequest,
     createUserRequest,
     deactivateUserRequest,
     getUsersRequest,
@@ -132,6 +133,16 @@ const UsersPage = () => {
             await loadUsers();
         } catch (error: unknown) {
             setError(getErrorMessage(error, "Failed to deactivate user"));
+        }
+    };
+
+    const handleActivate = async (userId: number) => {
+        try {
+            setError("");
+            await activateUserRequest(userId);
+            await loadUsers();
+        } catch (error: unknown) {
+            setError(getErrorMessage(error, "Failed to activate user"));
         }
     };
 
@@ -344,7 +355,13 @@ const UsersPage = () => {
                                                                 Deactivate
                                                             </button>
                                                         ) : (
-                                                            <span className="muted">Already inactive</span>
+                                                            <button
+                                                                type="button"
+                                                                className="button button--small"
+                                                                onClick={() => handleActivate(item.id)}
+                                                            >
+                                                                Activate
+                                                            </button>
                                                         )}
                                                     </div>
                                                 )}
