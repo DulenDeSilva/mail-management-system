@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import prisma from "../../config/prisma";
 import { hashPassword } from "../../utils/password";
 import { validateAndNormalizeEmail } from "../../utils/email";
+import { AuthRequest } from "../../middleware/auth.middleware";
 
 export const createUser = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -174,12 +175,22 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
     }
 };
 
-export const deactivateUser = async (req: Request, res: Response): Promise<void> => {
+export const deactivateUser = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const userId = Number(req.params.id);
 
+        if (!req.user) {
+            res.status(401).json({ message: "Unauthorized" });
+            return;
+        }
+
         if (Number.isNaN(userId)) {
             res.status(400).json({ message: "Invalid user id" });
+            return;
+        }
+
+        if (req.user.userId === userId) {
+            res.status(400).json({ message: "You cannot deactivate your own account" });
             return;
         }
 
@@ -190,6 +201,22 @@ export const deactivateUser = async (req: Request, res: Response): Promise<void>
         if (!existingUser) {
             res.status(404).json({ message: "User not found" });
             return;
+        }
+
+        if (existingUser.role === "ADMIN" && existingUser.isActive) {
+            const activeAdminCount = await prisma.user.count({
+                where: {
+                    role: "ADMIN",
+                    isActive: true
+                }
+            });
+
+            if (activeAdminCount <= 1) {
+                res.status(400).json({
+                    message: "You cannot deactivate the last active admin account"
+                });
+                return;
+            }
         }
 
         const user = await prisma.user.update({
