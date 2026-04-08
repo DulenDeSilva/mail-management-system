@@ -25,6 +25,11 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             return;
         }
 
+        if (!user.isActive) {
+            res.status(403).json({ message: "User account is inactive" });
+            return;
+        }
+
         const isPasswordValid = await comparePassword(password, user.passwordHash);
 
         if (!isPasswordValid) {
