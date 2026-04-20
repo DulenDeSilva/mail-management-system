@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mail Management System Controller</title>
+    <link rel="stylesheet" href="./style.css" />
+</head>
+
+<body>
+    <div class="container">
+        <h1>Mail Management System Controller</h1>
+
+        <div class="card">
+            <h2>Client</h2>
+            <div class="button-row">
+                <button id="start-client">Start Client</button>
+                <button id="stop-client">Stop Client</button>
+            </div>
+            <p><strong>Status:</strong> <span id="client-status">Stopped</span></p>
+            <pre id="client-log" class="log-box">No logs yet...</pre>
+        </div>
+
+        <div class="card">
+            <h2>Server</h2>
+            <div class="button-row">
+                <button id="start-server">Start Server</button>
+                <button id="stop-server">Stop Server</button>
+            </div>
+            <p><strong>Status:</strong> <span id="server-status">Stopped</span></p>
+            <pre id="server-log" class="log-box">No logs yet...</pre>
+        </div>
+    </div>
+
+    <script src="./renderer.js"></script>
+</body>
+
+</html>

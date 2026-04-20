@@ -1,0 +1,39 @@
+{
+  "name": "desktop-controller",
+  "version": "1.0.0",
+  "description": "Desktop GUI to control client and server",
+  "main": "main.js",
+  "author": "Dulen",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "dependencies": {
+    "tree-kill": "^1.2.2"
+  },
+  "devDependencies": {
+    "electron": "31.0.0",
+    "electron-builder": "^26.8.1"
+  },
+  "build": {
+    "appId": "com.mailmanagement.desktopcontroller",
+    "productName": "Mail Management Controller",
+    "asar": false,
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}
