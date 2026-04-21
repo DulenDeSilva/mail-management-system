@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
@@ -15,13 +15,15 @@ const services = {
         process: null,
         status: 'stopped',
         cwd: 'C:\\Users\\dulen\\OneDrive\\Documents\\GitHub\\mail-management-system\\client',
-        args: ['run', 'dev']
+        args: ['run', 'dev'],
+        url: 'http://localhost:5173'
     },
     server: {
         process: null,
         status: 'stopped',
         cwd: 'C:\\Users\\dulen\\OneDrive\\Documents\\GitHub\\mail-management-system\\server',
-        args: ['run', 'dev']
+        args: ['run', 'dev'],
+        url: 'http://localhost:5000/api/health'
     }
 };
 
@@ -39,20 +41,25 @@ function sendToRenderer(channel, payload) {
     mainWindow.webContents.send(channel, payload);
 }
 
-function sendServiceUpdate(serviceName, state, message) {
+function sendServiceUpdate(serviceName, state, message, stream = 'system') {
     if (isQuitting) return;
 
     sendToRenderer('service:update', {
         service: serviceName,
         state,
-        message
+        message,
+        stream
     });
 }
 
 function createWindow() {
     mainWindow = new BrowserWindow({
-        width: 1000,
-        height: 700,
+        width: 1260,
+        height: 860,
+        minWidth: 1120,
+        minHeight: 760,
+        backgroundColor: '#131821',
+        title: 'Mail Management Controller',
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
             contextIsolation: true,
@@ -91,7 +98,7 @@ function startService(serviceName) {
     }
 
     if (service.process) {
-        sendServiceUpdate(serviceName, 'running', `${serviceName} is already running\n`);
+        sendServiceUpdate(serviceName, service.status, `${serviceName} is already running\n`);
         return;
     }
 
@@ -110,7 +117,8 @@ function startService(serviceName) {
         return;
     }
 
-    sendServiceUpdate(serviceName, 'starting', `${serviceName} is starting...\n`);
+    service.status = 'starting';
+    sendServiceUpdate(serviceName, service.status, `${serviceName} is starting...\n`);
 
     const child = spawn(NODE_EXE, [NPM_CLI, ...service.args], {
         cwd: service.cwd,
@@ -119,13 +127,11 @@ function startService(serviceName) {
     });
 
     service.process = child;
-    service.status = 'starting';
 
     child.stdout.on('data', (data) => {
         const message = cleanLog(data.toString());
-        sendServiceUpdate(serviceName, 'running', message);
-
         const lower = message.toLowerCase();
+
         if (
             lower.includes('local:') ||
             lower.includes('ready in') ||
@@ -135,17 +141,24 @@ function startService(serviceName) {
         ) {
             service.status = 'running';
         }
+
+        sendServiceUpdate(serviceName, service.status, message, 'stdout');
     });
 
     child.stderr.on('data', (data) => {
         const message = cleanLog(data.toString());
-        sendServiceUpdate(serviceName, 'error', message);
+        const visibleState = service.status === 'running' ? 'running' : service.status;
+        sendServiceUpdate(serviceName, visibleState, message, 'stderr');
     });
 
     child.on('close', (code) => {
         service.process = null;
         service.status = 'stopped';
-        sendServiceUpdate(serviceName, 'stopped', `\n${serviceName} stopped. Exit code: ${code}\n`);
+        sendServiceUpdate(
+            serviceName,
+            'stopped',
+            `\n${serviceName} stopped. Exit code: ${code}\n`
+        );
     });
 
     child.on('error', (error) => {
@@ -172,7 +185,11 @@ function stopService(serviceName) {
 
     kill(pid, 'SIGTERM', (err) => {
         if (err) {
-            sendServiceUpdate(serviceName, 'error', `Failed to stop ${serviceName}: ${err.message}\n`);
+            sendServiceUpdate(
+                serviceName,
+                'error',
+                `Failed to stop ${serviceName}: ${err.message}\n`
+            );
             return;
         }
 
@@ -188,4 +205,9 @@ ipcMain.handle('service:start', async (_, serviceName) => {
 
 ipcMain.handle('service:stop', async (_, serviceName) => {
     stopService(serviceName);
+});
+
+ipcMain.handle('shell:openExternal', async (_, url) => {
+    if (!url) return;
+    await shell.openExternal(url);
 });

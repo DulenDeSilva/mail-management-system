@@ -9,29 +9,128 @@
 </head>
 
 <body>
-    <div class="container">
-        <h1>Mail Management System Controller</h1>
-
-        <div class="card">
-            <h2>Client</h2>
-            <div class="button-row">
-                <button id="start-client">Start Client</button>
-                <button id="stop-client">Stop Client</button>
+    <main class="app-shell">
+        <section class="hero-panel">
+            <div class="hero-copy">
+                <span class="eyebrow">Desktop Controller</span>
+                <h1>Run the mail management stack from one place.</h1>
+                <p>
+                    Start the frontend and backend, monitor live logs, and jump directly
+                    into the web app or API health endpoint once the services are ready.
+                </p>
             </div>
-            <p><strong>Status:</strong> <span id="client-status">Stopped</span></p>
-            <pre id="client-log" class="log-box">No logs yet...</pre>
-        </div>
 
-        <div class="card">
-            <h2>Server</h2>
-            <div class="button-row">
-                <button id="start-server">Start Server</button>
-                <button id="stop-server">Stop Server</button>
+            <div class="hero-actions">
+                <button id="start-all" class="button">Start All</button>
+                <button id="stop-all" class="button button--secondary">Stop All</button>
+                <button id="clear-logs" class="button button--ghost">Clear Logs</button>
             </div>
-            <p><strong>Status:</strong> <span id="server-status">Stopped</span></p>
-            <pre id="server-log" class="log-box">No logs yet...</pre>
-        </div>
-    </div>
+        </section>
+
+        <section class="summary-grid">
+            <article class="summary-card">
+                <span class="summary-card__label">Running</span>
+                <strong id="running-count">0</strong>
+                <span class="summary-card__meta">Services online</span>
+            </article>
+
+            <article class="summary-card">
+                <span class="summary-card__label">Starting</span>
+                <strong id="starting-count">0</strong>
+                <span class="summary-card__meta">Processes booting</span>
+            </article>
+
+            <article class="summary-card">
+                <span class="summary-card__label">Stopped</span>
+                <strong id="stopped-count">2</strong>
+                <span class="summary-card__meta">Waiting to launch</span>
+            </article>
+
+            <article class="summary-card">
+                <span class="summary-card__label">Log Lines</span>
+                <strong id="log-line-count">0</strong>
+                <span class="summary-card__meta">Captured output</span>
+            </article>
+        </section>
+
+        <section class="service-grid">
+            <article id="client-card" class="service-card" data-state="stopped">
+                <div class="service-card__header">
+                    <div>
+                        <span class="eyebrow">Frontend</span>
+                        <h2>Client</h2>
+                        <p>Vite development server for the React UI.</p>
+                    </div>
+                    <span id="client-status" class="status-pill status-pill--stopped">Stopped</span>
+                </div>
+
+                <dl class="service-meta">
+                    <div>
+                        <dt>Command</dt>
+                        <dd><code>npm run dev</code></dd>
+                    </div>
+                    <div>
+                        <dt>Folder</dt>
+                        <dd><code>client/</code></dd>
+                    </div>
+                    <div>
+                        <dt>Endpoint</dt>
+                        <dd><code>http://localhost:5173</code></dd>
+                    </div>
+                </dl>
+
+                <div class="button-row">
+                    <button id="start-client" class="button">Start Client</button>
+                    <button id="stop-client" class="button button--secondary">Stop</button>
+                    <button id="open-client" class="button button--ghost">Open App</button>
+                </div>
+
+                <div class="log-header">
+                    <span>Live log</span>
+                    <span id="client-log-count" class="log-count">0 lines</span>
+                </div>
+                <pre id="client-log" class="log-box">Waiting for client output...</pre>
+            </article>
+
+            <article id="server-card" class="service-card" data-state="stopped">
+                <div class="service-card__header">
+                    <div>
+                        <span class="eyebrow">Backend</span>
+                        <h2>Server</h2>
+                        <p>Express API and mail processing runtime.</p>
+                    </div>
+                    <span id="server-status" class="status-pill status-pill--stopped">Stopped</span>
+                </div>
+
+                <dl class="service-meta">
+                    <div>
+                        <dt>Command</dt>
+                        <dd><code>npm run dev</code></dd>
+                    </div>
+                    <div>
+                        <dt>Folder</dt>
+                        <dd><code>server/</code></dd>
+                    </div>
+                    <div>
+                        <dt>Endpoint</dt>
+                        <dd><code>http://localhost:5000/api/health</code></dd>
+                    </div>
+                </dl>
+
+                <div class="button-row">
+                    <button id="start-server" class="button">Start Server</button>
+                    <button id="stop-server" class="button button--secondary">Stop</button>
+                    <button id="open-server" class="button button--ghost">Open Health</button>
+                </div>
+
+                <div class="log-header">
+                    <span>Live log</span>
+                    <span id="server-log-count" class="log-count">0 lines</span>
+                </div>
+                <pre id="server-log" class="log-box">Waiting for server output...</pre>
+            </article>
+        </section>
+    </main>
 
     <script src="./renderer.js"></script>
 </body>
